@@ -2,9 +2,21 @@ import React, { useState } from "react";
 
 export const Dropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [checkedItems, setCheckedItems] = useState({
+    all: false,
+    guy: false,
+    girls: false,
+  });
 
   const toggleDropdown = () => {
     setIsOpen((prevState) => !prevState);
+  };
+
+  const handleCheckboxChange = (item) => {
+    setCheckedItems(prev => ({
+      ...prev,
+      [item]: !prev[item]
+    }));
   };
 
   return (
@@ -13,9 +25,9 @@ export const Dropdown = () => {
       <button
         id="dropdownDefaultButton"
         onClick={toggleDropdown}
-        className="bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none font-medium rounded-lg px-5 py-2 text-center inline-flex items-center justify-between w-[220px]"
+        className="text-gray-500 bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center justify-between w-[250px]"
       >
-        Client List Selection
+        Select All
         <svg
           className="w-2.5 h-2.5 ms-3"
           aria-hidden="true"
@@ -24,7 +36,7 @@ export const Dropdown = () => {
           viewBox="0 0 10 6"
         >
           <path
-            stroke="red"
+            stroke="currentColor"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="2"
@@ -35,40 +47,43 @@ export const Dropdown = () => {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div
-          className="absolute z-10 bg-white divide-y divide-gray-100 rounded-sm shadow-sm w-[250px]"
-        >
+        <div className="absolute z-10 bg-white divide-y divide-gray-100 rounded-sm shadow-sm w-[250px]">
           <ul
             className="py-2 text-sm text-gray-700 dark:text-gray-200"
             aria-labelledby="dropdownDefaultButton"
           >
-            <li className="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-200 transition-all border-b">
-                <input type="checkbox" />
-                <span
-                    className="block text-gray-500"
-                >
+            <li className="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-200 transition-all border-b" onClick={() => handleCheckboxChange('all')}>
+                <input 
+                  type="checkbox" 
+                  checked={checkedItems.all}
+                  onChange={() => handleCheckboxChange('all')}
+                />
+                <span className="block text-gray-500">
                     Select All
                 </span>
             </li>
             
-            <li className="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-200 transition-all border-b">
-                <input type="checkbox" />
-                <span
-                    className="block text-gray-500"
-                >
+            <li className="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-200 transition-all border-b" onClick={() => handleCheckboxChange('guy')}>
+                <input 
+                  type="checkbox" 
+                  checked={checkedItems.guy}
+                  onChange={() => handleCheckboxChange('guy')}
+                />
+                <span className="block text-gray-500">
                     Guy
                 </span>
             </li>
 
-            <li className="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-200 transition-all border-b">
-                <input type="checkbox" />
-                <span
-                    className="block text-gray-500"
-                >
+            <li className="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-200 transition-all border-b" onClick={() => handleCheckboxChange('girls')}>
+                <input 
+                  type="checkbox" 
+                  checked={checkedItems.girls}
+                  onChange={() => handleCheckboxChange('girls')}
+                />
+                <span className="block text-gray-500">
                     Girls
                 </span>
             </li>
-            
           </ul>
 
           <button className='bg-green-500 text-white text-center w-full py-2 text-lg font-medium'>Create New</button>

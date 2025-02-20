@@ -1,10 +1,10 @@
 const API = import.meta.env.VITE_API_URL
 
 // Fetch Notification Table data
-export const getNotifications = async (currentTab) => {
+export const getNotifications = async () => {
     try {
         const token = localStorage.getItem('access_token') || '';
-        const res = await fetch(API+`table?currentTab=${currentTab}`, {
+        const res = await fetch(API+`customer-table`, {
             headers: {
                 authorization: `Bearer ${token}`
             }

@@ -6,11 +6,11 @@ const clientSlice = createSlice({
         data : []
     },
     reducers: {
-        setData: (state, action) => {
+        setClient: (state, action) => {
             state.data = action.payload;
         }
     }
 })
 
 export default clientSlice.reducer;
-export const { setData } = clientSlice.actions;
+export const { setClient } = clientSlice.actions;

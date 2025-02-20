@@ -1,69 +1,28 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { Dropdown } from './Dropdown'
 import { useDispatch, useSelector } from 'react-redux'
 import { loadingOff, loadingOn } from '../../store/authSlice'
+import { setClient } from '../../store/clientSlice'
+import { getClients} from '../../services/clients'
 import { Navbar } from '../common/Navbar'
-import { Dropdown } from './Dropdown'
-import { setData } from '../../store/clientSlice'
-import { deleteClient, getClients, sendSms } from '../../services/clients'
-import moment from 'moment'
-import { DATE_FORMAT_CLIENT, DATE_TIME_FORMAT_CLIENT } from '../../constants'
-import { CountdownTimer } from './CountDown'
-import { IoMdRefresh } from 'react-icons/io'
-import { AiTwotoneDelete } from "react-icons/ai";
-import { MdOutlineEdit } from "react-icons/md";
-import toast from 'react-hot-toast'
-import { FaRegCalendarDays } from "react-icons/fa6";
-import { IoMdTime } from "react-icons/io";
-import { WebSocketManager } from '../../services/ws'
+import { FiFile } from 'react-icons/fi'
+import { addClient } from '../../services/clients'
 
 export const ClientsTable = () => {
+    const [phoneNumbers, setPhoneNumbers] = useState([''])
+    const [filePath, setFilePath] = useState(null)
     const dispatch = useDispatch()
     const data = useSelector(state => state.client.data)
-    const calendarRef = useRef(null);
-    const timeRef = useRef(null);
-    const [refetch, setRefetch] = useState(false)
-    const dataRef = useRef(data);
 
-    useEffect(() => {
-        dataRef.current = data;
-    }, [data])
 
     useEffect(() => {
         fetchData();
-
-        data.forEach((item) => {
-            if (new Date(item.qued_timestamp) < new Date() && item.message_status === 0) {
-                handleSendSms(item.id);
-            }
-        })
-    }, [refetch])
-
-    useEffect(() => {
-        const websocketManager = new WebSocketManager();
-        const id = Date.now();
-    
-        websocketManager.addFns("CLIENT_UPDATE", (dataInfo) => {
-            if (!dataRef.current) return;
-    
-            const dataArr = dataRef.current.map((info) => {
-                const updatedItem = dataInfo.find((item) => item.id === info.id);
-                return updatedItem ? { ...info, num_sent: updatedItem.num_sent } : info;
-            });
-    
-            dispatch(setData(dataArr));
-        }, id);
-    
-        return () => {
-            websocketManager.removeFns("CLIENT_UPDATE", id);
-            websocketManager.closeSocket();
-        };
-    }, []);
-    
+    }, [])
 
     const fetchData = async () => {
         dispatch(loadingOn());
         let res = await getClients();
-
+    
         if (res.detail === "Could not validate credentials") {
             alert('Unauthorized user!');
             navigate('/signup')
@@ -71,54 +30,97 @@ export const ClientsTable = () => {
 
         if (res) {
             if (Array.isArray(res)) {
-                console.log("rs: ", res);
-                dispatch(setData(res))
+                // console.log("rs: ", res);
+                dispatch(setClient(res))
             }
         }
         dispatch(loadingOff())
     }
 
-    const handleClickCalendar = () => {
-        calendarRef.current.showPicker();
-    };
-
-    const handleClickTime = () => {
-        timeRef.current.showPicker();
-    };
-
-
-    const deleleCustomer = async (id) => {
-        dispatch(loadingOn());
-        let res = await deleteClient(id);
-
-        if (res.detail === "Could not validate credentials") {
-            alert('Unauthorized user!');
-            navigate('/signup')
-        }
-
-        if (res.success) {
-            toast.dismiss()
-            toast.success("Successfully deleted the customer!");
-            setRefetch(!refetch);
-        }
-        dispatch(loadingOff());
+    const handleAddPhoneInput = () => {
+        setPhoneNumbers([...phoneNumbers, ''])
     }
 
-    const handleSendSms = async (clientId) => {
-        dispatch(loadingOn());
-        const res = await sendSms(clientId);
+    const handlePhoneChange = (index, value) => {
+        const updatedNumbers = [...phoneNumbers];
+        updatedNumbers[index] = value;
+        setPhoneNumbers(updatedNumbers);
+    }
 
-        if (res.detail === "Could not validate credentials") {
-            alert('Unauthorized user!');
-            navigate('/signup')
+    const handleRemovePhoneInput = (index) => {
+        const updatedNumbers = phoneNumbers.filter((_, i) => i !== index)
+        setPhoneNumbers(updatedNumbers)
+    }
+
+    const handleAddClient = async () => {
+        const validPhoneNumbers = phoneNumbers.filter(num => num.trim() !== '');
+        
+        if (validPhoneNumbers.length === 0) {
+            alert('Please enter at least one phone number');
+            return;
         }
 
-        if (res.success) {
-            toast.dismiss()
-            toast.success("Successfully send the sms!");
-            setRefetch(!refetch);
+        try {
+            dispatch(loadingOn());
+            
+            const response = await addClient({phone_numbers: validPhoneNumbers});
+            console.log("response: ", response);
+            if (response.message !== "Customer added successfully" && response.status !== 200) {
+                throw new Error('Failed to add client');
+            }
+
+            setPhoneNumbers(['']);
+        } catch (error) {
+            console.error('Error adding client:', error);
+            alert('Failed to add client');
+        } finally {
+            fetchData();
+            dispatch(loadingOff());
         }
-        dispatch(loadingOff());
+    }
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0]
+        if (file) {
+            setFilePath(file)
+            
+            // Read the file contents
+            const reader = new FileReader()
+            reader.onload = (event) => {
+                const content = event.target.result
+                // Split content by newlines and handle different delimiters (comma or pipe)
+                const numbers = content
+                    .split(/\r?\n/)
+                    .map(line => line.trim())
+                    .filter(line => line) // Remove empty lines
+                    .flatMap(line => {
+                        // Try splitting by comma first, then by pipe if no commas found
+                        const parts = line.includes(',') ? 
+                            line.split(',') : 
+                            line.split('|')
+                        return parts.map(part => part.trim())
+                    })
+                    .filter(number => number) // Remove empty values
+
+                if (numbers.length > 0) {
+                    // Update phone number fields
+                    setPhoneNumbers(numbers)
+                } else {
+                    alert('No valid phone numbers found in the file')
+                    setFilePath(null)
+                    e.target.value = '' // Reset file input
+                }
+            }
+
+            reader.onerror = () => {
+                alert('Error reading file')
+                setFilePath(null)
+                e.target.value = '' // Reset file input
+            }
+
+            // Read file as text
+            reader.readAsText(file)
+        }
     }
 
     return (
@@ -126,122 +128,81 @@ export const ClientsTable = () => {
             <Navbar />
 
             <div>
-                <div className='flex items-center justify-between gap-5 bg-white px-5 mb-[2px] py-1'>
-                    <div className='flex items-center gap-4'>
-                        <Dropdown />
+                <div className='flex items-center gap-5 bg-white px-5 mb-[2px] py-1'>
+                    <Dropdown />
 
-                        <div onClick={handleClickCalendar} className='cursor-pointer'>
-                            <input
-                                type="date"
-                                ref={calendarRef}
-                                className="absolute opacity-0 cursor-pointer"
+                    <div className='flex flex-col gap-2'>
+                        <div className='flex items-center gap-2'>
+                            <input 
+                                type='text'
+                                className='border border-gray-300 bg-gray-200 text-lg px-3 py-1 text-gray-500 rounded-sm w-96'
+                                placeholder='Phone Numbers (e.g. +1 098 765 4321)'
+                                value={phoneNumbers.join(',')}
                                 onChange={(e) => {
-                                    console.log('Selected Date:', e.target.value);
+                                    const numbers = e.target.value.split(',').map(n => n.trim());
+                                    setPhoneNumbers(numbers);
                                 }}
                             />
-
-                            <div className="flex bg-gray-200 px-4 py-2 rounded-md cursor-pointer items-center gap-3" >
-                                <span className="font-medium cursor-pointer">Calendar</span>
-                                <FaRegCalendarDays className='text-red-700' />
-                            </div>
                         </div>
-
-                        <div onClick={handleClickTime} className='cursor-pointer'>
-                            <input
-                                type="time"
-                                ref={timeRef}
-                                className="absolute opacity-0 cursor-pointer"
-                                onChange={(e) => {
-                                    console.log('Selected time:', e.target.value);
-                                }}
-                            />
-
-                            <div className="flex bg-gray-200 px-4 py-2 rounded-md cursor-pointer items-center gap-7" >
-                                <span className="font-medium cursor-pointer">Time</span>
-                                <IoMdTime className='text-red-700 text-lg' />
-                            </div>
-                        </div>
-
-                        <input type='text'
-                            className='border border-gray-300 bg-gray-200 px-3 py-1.5 rounded-md placeholder:text-black placeholder:font-medium'
-                            placeholder='Message...'
-                        />
-
-                        <input type="file"
-                            className='cursor-pointer bg-gray-200 text-gray-500 py-1 px-2 rounded-md'
-                        />
                     </div>
 
-                    <div>
-                        <button className='bg-green-500 text-white px-4 py-1 rounded-sm text-lg font-semibold'>Submit</button>
+                    <span className='text-gray-500 text-lg'>or</span>
+
+                    <div className="relative">
+                        <input 
+                            type="file" 
+                            id="phone-numbers-file"
+                            className="hidden"
+                            onChange={handleFileChange}
+                            accept=".csv,.xlsx,.xls, .txt"
+                        />
+                        <label 
+                            htmlFor="phone-numbers-file" 
+                            className="flex items-center gap-2 cursor-pointer bg-gray-200 text-gray-500 py-1 px-3 rounded-sm"
+                        >
+                            <FiFile className="text-lg" />
+                            <span>{filePath ? filePath.name : 'Choose file'}</span>
+                        </label>
                     </div>
+
+                    <button 
+                        className='bg-green-500 text-white px-5 py-1 rounded-sm text-lg font-semibold'
+                        onClick={handleAddClient}
+                    >
+                        ADD
+                    </button>
                 </div>
 
                 <table className="w-[100%]">
                     <thead className=" bg-red-700">
                         <tr>
-                            <th className="w-[10%] pl-8 py-2 text-left text-lg text-white">Created On</th>
-                            <th className="w-[15%] text-white text-lg text-left">Scheduled</th>
-                            <th className="w-[45%] text-white text-lg text-left">Message</th>
-                            <th className="w-[10%] text-white text-lg text-left">Image</th>
-                            <th className="w-[8%] text-white text-lg text-left">Status</th>
-                            <th className="w-[12%]" />
+                            <th className="w-[10%] text-center p-2 text-lg text-white">ID</th>
+                            <th className="w-[50%] text-center p-2 text-lg text-white">Cell Phone</th>
+                            <th className="w-[10%] text-white text-lg text-center">Opt In</th>
+                            <th className="w-[10%] text-white text-lg text-center">Sent Optin</th>
+                            <th className="w-[10%] text-white text-lg text-center">Last Received</th>
+                            <th className="w-[10%] text-white text-lg text-center">List</th>
                         </tr>
                     </thead>
 
-                    <tbody className="bg-white">
-
-                        {data?.map((item, dataIndex) => {
-                            let status = 'REVIEW';
-                            if (item.sent_timestamp) console.log("time:", item.sent_timestamp);
-                            if (item.message_status === 1) {
-                                status = 'REVIEW'
-                            } else if (item.message_status === 2) {
-                                status = 'QUED'
-                            } else if (item.message_status === 3) {
-                                status = 'SENT'
-                            }
-
-                            return (
-                                <React.Fragment key={`parent-${item.id}`}>
-                                    <tr className={`bg-red-700 border-t-2 border-t-white`}>
-                                        <td className="text-lg pl-8 py-2 font-semibold text-white">{moment.utc(item.created_at).format(DATE_FORMAT_CLIENT)}</td>
-                                        <td className="text-lg font-semibold text-white text-left">{moment.utc(item.qued_timestamp).format(DATE_TIME_FORMAT_CLIENT)}</td>
-                                        <td className="text-lg font-semibold text-white text-left">
-                                            {item.last_message}
-                                        </td>
-                                        <td className="text-lg font-semibold text-white text-left">
-                                            <img src={item.image_url} alt={item.id} className='w-10 h-8 object-cover' />
-                                        </td>
-                                        <td className="text-lg font-semibold text-left">
-                                            {
-                                                new Date(item.qued_timestamp) > new Date() ? (
-                                                    <CountdownTimer targetDate={item.qued_timestamp} onComplete={() => handleSendSms(item.id)} />
-                                                ) : (
-                                                    <div className='bg-green-500 px-1 py-[2px]'>
-                                                        <p className='text-center text-white'>{`${item.num_sent || 0}/${item.phone_numbers?.length}`}</p>
-                                                    </div>
-                                                )
-                                            }
-
-                                        </td>
-
-                                        <td>
-                                            <div className='flex items-center justify-center gap-1'>
-                                                <IoMdRefresh className="text-3xl text-white cursor-pointer" 
-                                                    onClick={() => handleSendSms(item.id)}
-                                                />
-                                                <MdOutlineEdit className="text-3xl text-white cursor-pointer" />
-                                                <AiTwotoneDelete className="text-2xl text-white cursor-pointer"
-                                                    onClick={() => deleleCustomer(item.id)}
-                                                />
-                                                {/* <IoCloseSharp className="text-3xl text-white cursor-pointer" /> */}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </React.Fragment >
-                            )
-                        })}
+                    <tbody className="table-body-transparent">
+                        {data.map((item) => (
+                            <tr key={item.id} className="bg-green-50 hover:bg-green-100">
+                                <td className="text-center p-2">{item.id}</td>
+                                <td className="text-center p-2">
+                                    {item.phone_numbers.map((phone, index) => (
+                                        <div key={index}>
+                                            {phone}
+                                            {index < item.phone_numbers.length - 1 && <br />}
+                                        </div>
+                                    ))}
+                                </td>
+                                <td className="text-center p-2">{item.opt_in ? 'Yes' : 'No'}</td>
+                                <td className="text-center p-2">{item.sent_optin ? 'Yes' : 'No'}</td>
+                                <td className="text-center p-2">{item.last_received || '-'}</td>
+                                <td className="text-center p-2">{item.list || '-'}</td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
             </div>

@@ -12,37 +12,29 @@ const notificationSlice = createSlice({
         sendTimer: 5
     },
     reducers: {
-        setData: (state, action) => {
+        setClient: (state, action) => {
             const payloadData = action.payload;
-            const obj = {}
             console.log("data", state.data);
             
-            payloadData.forEach((newItem) => {
-                let item = { ...newItem}
-                if(verifyString(item.claim_number)) {
-                    item.claim_number = 'N/A';
-                }
-                if(verifyString(item.project_name)) {
-                    item.project_name = 'N/A';
-                }
-                
-                if(!obj[item.customer_id]) {
-                    obj[item.customer_id] = {
-                        ...item,
-                        data: [item]
-                    }
-                    obj[item.customer_id].review = Number(item.message_status == 1)
-                    obj[item.customer_id].qued = Number(item.message_status == 2)
-                    obj[item.customer_id].sent = Number(item.message_status == 3)
-                } else {
-                    const itemData = obj[item.customer_id];
-                    itemData.data.push(item);
-                    obj[item.customer_id].review += Number(item.message_status == 1)
-                    obj[item.customer_id].qued += Number(item.message_status == 2)
-                    obj[item.customer_id].sent += Number(item.message_status == 3)
-                }
-            })
-            state.data = Object.values(obj) || [];
+            // const processedData = payloadData.map((newItem) => {
+            //     let item = { ...newItem };
+            //     if(verifyString(item.id)) {
+            //         item.id = 'N/A';
+            //     }
+            //     if(!item.phone_numbers || verifyString(item.phone_numbers)) {
+            //         item.phone_numbers = [];
+            //     } else if(typeof item.phone_numbers === 'string') {
+            //         // Handle case where phone_numbers might be a string
+            //         try {
+            //             item.phone_numbers = JSON.parse(item.phone_numbers);
+            //         } catch {
+            //             item.phone_numbers = [item.phone_numbers];
+            //         }
+            //     }
+            //     return item;
+            // });
+            
+            state.data = payloadData;
         },
         updateMessageStatus: (state, action) => {
             const { itemIndex, childIndex, newStatus } = action.payload;
@@ -59,4 +51,4 @@ const notificationSlice = createSlice({
 })
 
 export default notificationSlice.reducer;
-export const { setData, updateMessageStatus, setSendTimer } = notificationSlice.actions;
+export const { setClient, updateMessageStatus, setSendTimer } = notificationSlice.actions;

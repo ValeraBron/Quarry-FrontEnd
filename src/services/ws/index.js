@@ -1,6 +1,4 @@
-
 const API = import.meta.env.VITE_WS_URL
-
 
 export class WebSocketManager {
     socket;

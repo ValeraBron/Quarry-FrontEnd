@@ -8,7 +8,7 @@ import { IoCloseSharp } from "react-icons/io5";
 import { BsCheckLg } from "react-icons/bs";
 
 import { useDispatch, useSelector } from 'react-redux';
-import { setData, setSendTimer, updateMessageStatus } from '../../store/notificationSlice';
+import { setClient, setSendTimer, updateMessageStatus } from '../../store/notificationSlice';
 import { loadingOff, loadingOn } from '../../store/authSlice';
 import { cancelQued, changeCustomerStatus, deleteCustomer, getNotifications, setQued, setSent, updateLastMessage, getTimer, getNewProjects, setVariables, rerunChatGPT, sendOptInEmail, sendOptInPhone, getVariables, checkScrapingStatus, checkMainTableUpdate, deleteProject } from '../../services/notifications';
 import moment from 'moment';
@@ -70,7 +70,7 @@ export const NotificationsBox = () => {
         
         if (res) {
             if (Array.isArray(res)) {
-                dispatch(setData(res))
+                dispatch(setClient(res))
             }
         }
 

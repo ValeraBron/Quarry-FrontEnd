@@ -9,7 +9,7 @@ export const getClients = async () => {
             }
         })
         const json = await res.json();
-        console.log({json})
+        //console.log({json})
         if (json.detail === "Could not validate credentials") {
             localStorage.removeItem('access_token')
         }
@@ -32,7 +32,7 @@ export const addClient = async (payload) => {
         })
 
         const json = await res.json();
-        console.log({json})
+        //console.log({json})
         if (json.detail === "Could not validate credentials") {
             localStorage.removeItem('access_token')
         }
@@ -55,7 +55,7 @@ export const updateClient = async (payload, customer_id) => {
         })
 
         const json = await res.json();
-        console.log({json})
+        //console.log({json})
         if (json.detail === "Could not validate credentials") {
             localStorage.removeItem('access_token')
         }
@@ -75,7 +75,7 @@ export const deleteClient = async (customer_id) => {
         })
 
         const json = await res.json();
-        console.log({json})
+        //console.log({json})
         if (json.detail === "Could not validate credentials") {
             localStorage.removeItem('access_token')
         }
@@ -85,22 +85,3 @@ export const deleteClient = async (customer_id) => {
     }
 }
 
-export const sendSms = async (customer_id) => {
-    try {
-        const token = localStorage.getItem('access_token') || '';
-        const res = await fetch(API+`send?customer_id=${customer_id}`, {
-            headers: {
-                authorization: `Bearer ${token}`
-            }
-        })
-
-        const json = await res.json();
-        console.log({json})
-        if (json.detail === "Could not validate credentials") {
-            localStorage.removeItem('access_token')
-        }
-        return json;
-    } catch (error) {
-        console.log(error)
-    }
-}

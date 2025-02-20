@@ -1,13 +1,15 @@
 import { configureStore } from "@reduxjs/toolkit"
 import authReducer from './authSlice'
-import notificationSlice from "./notificationSlice";
-import clientSlice from './clientSlice'
+import notificationReducer from "./notificationSlice";
+import clientReducer from './clientSlice'
+import messageReducer from './messageSlice'
 
 const appStore = configureStore({
     reducer: {
         auth: authReducer,
-        notification: notificationSlice,
-        client: clientSlice
+        notification: notificationReducer,
+        client: clientReducer,
+        message: messageReducer
     }
 })
 

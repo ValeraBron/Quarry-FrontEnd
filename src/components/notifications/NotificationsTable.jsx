@@ -13,7 +13,7 @@ import ReactMarkdown from 'react-markdown';
 import moment from 'moment';
 import { DATE_FORMAT } from '../../constants';
 import { useDispatch, useSelector } from 'react-redux';
-import { setData, setSendTimer, updateMessageStatus } from '../../store/notificationSlice';
+import { setClient, setSendTimer, updateMessageStatus } from '../../store/notificationSlice';
 import { loadingOff, loadingOn } from '../../store/authSlice';
 import logo from "../../assets/logo.svg";
 import messageIcon from "../../assets/message.svg";
@@ -170,7 +170,7 @@ export const NotificationsTable = () => {
         if (res) {
             if (Array.isArray(res)) {
                 console.log("rs: ", res);
-                dispatch(setData(res))
+                dispatch(setClient(res))
             }
         }
         dispatch(loadingOff())
