@@ -3,14 +3,22 @@ import { createSlice } from "@reduxjs/toolkit";
 const clientSlice = createSlice({
     name: 'client',
     initialState: {
-        data : []
+        data: [],
+        phoneNumbers: [],
+        categories: []
     },
     reducers: {
-        setClient: (state, action) => {
+        setClients: (state, action) => {
             state.data = action.payload;
+        },
+        setPhoneNumbers: (state, action) => {
+            state.phoneNumbers = action.payload;
+        },
+        setCategories: (state, action) => {
+            state.categories = action.payload;
         }
     }
 })
 
 export default clientSlice.reducer;
-export const { setClient } = clientSlice.actions;
+export const { setClients, setPhoneNumbers, setCategories } = clientSlice.actions;

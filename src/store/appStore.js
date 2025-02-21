@@ -7,9 +7,9 @@ import messageReducer from './messageSlice'
 const appStore = configureStore({
     reducer: {
         auth: authReducer,
-        notification: notificationReducer,
         client: clientReducer,
-        message: messageReducer
+        message: messageReducer,
+        notification: notificationReducer
     }
 })
 

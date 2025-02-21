@@ -5,9 +5,9 @@ export class WebSocketManager {
     fns;
 
     constructor() {
+        console.log("API: ", API)
         this.socket = new WebSocket(API);
         this.fns = {}
-
 
         this.socket.addEventListener("message", event => {
             const data = JSON.parse(event.data)

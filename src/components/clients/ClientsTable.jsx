@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Dropdown } from './Dropdown'
 import { useDispatch, useSelector } from 'react-redux'
 import { loadingOff, loadingOn } from '../../store/authSlice'
-import { setClient } from '../../store/clientSlice'
+import { setClients } from '../../store/clientSlice'
 import { getClients} from '../../services/clients'
 import { Navbar } from '../common/Navbar'
 import { FiFile } from 'react-icons/fi'
@@ -11,8 +11,9 @@ import { addClient } from '../../services/clients'
 export const ClientsTable = () => {
     const [phoneNumbers, setPhoneNumbers] = useState([''])
     const [filePath, setFilePath] = useState(null)
+    const [selectedCategories, setSelectedCategories] = useState([])
     const dispatch = useDispatch()
-    const data = useSelector(state => state.client.data)
+    const clients = useSelector(state => state.client.data)
 
 
     useEffect(() => {
@@ -31,7 +32,7 @@ export const ClientsTable = () => {
         if (res) {
             if (Array.isArray(res)) {
                 // console.log("rs: ", res);
-                dispatch(setClient(res))
+                dispatch(setClients(res))
             }
         }
         dispatch(loadingOff())
@@ -60,16 +61,28 @@ export const ClientsTable = () => {
             return;
         }
 
+        if (selectedCategories.length === 0) {
+            alert('Please select at least one category');
+            return;
+        }
+
         try {
             dispatch(loadingOn());
             
-            const response = await addClient({phone_numbers: validPhoneNumbers});
+            const clientData = {
+                phone_numbers: validPhoneNumbers,
+                categories: selectedCategories
+            };
+            
+            const response = await addClient(clientData);
             console.log("response: ", response);
             if (response.message !== "Customer added successfully" && response.status !== 200) {
                 throw new Error('Failed to add client');
             }
 
             setPhoneNumbers(['']);
+            // Optionally reset categories
+            // setSelectedCategories([]);
         } catch (error) {
             console.error('Error adding client:', error);
             alert('Failed to add client');
@@ -123,13 +136,19 @@ export const ClientsTable = () => {
         }
     }
 
+    const handleCategoryChange = (categories) => {
+        setSelectedCategories(categories);
+        // You can perform any additional actions here when categories change
+        // console.log('Selected categories:', categories);
+    }
+
     return (
         <div>
             <Navbar />
 
             <div>
                 <div className='flex items-center gap-5 bg-white px-5 mb-[2px] py-1'>
-                    <Dropdown />
+                    <Dropdown onCategoryChange={handleCategoryChange} />
 
                     <div className='flex flex-col gap-2'>
                         <div className='flex items-center gap-2'>
@@ -177,30 +196,30 @@ export const ClientsTable = () => {
                     <thead className=" bg-red-700">
                         <tr>
                             <th className="w-[10%] text-center p-2 text-lg text-white">ID</th>
-                            <th className="w-[50%] text-center p-2 text-lg text-white">Cell Phone</th>
+                            <th className="w-[30%] text-center p-2 text-lg text-white">Cell Phone</th>
                             <th className="w-[10%] text-white text-lg text-center">Opt In</th>
                             <th className="w-[10%] text-white text-lg text-center">Sent Optin</th>
                             <th className="w-[10%] text-white text-lg text-center">Last Received</th>
-                            <th className="w-[10%] text-white text-lg text-center">List</th>
+                            <th className="w-[20%] text-white text-lg text-center">List</th>
                         </tr>
                     </thead>
 
                     <tbody className="table-body-transparent">
-                        {data.map((item) => (
-                            <tr key={item.id} className="bg-green-50 hover:bg-green-100">
-                                <td className="text-center p-2">{item.id}</td>
+                        {clients.map((item, index) => (
+                            <tr key={index} className="bg-green-50 hover:bg-green-100">
+                                <td className="text-center p-2">{index + 1}</td>
                                 <td className="text-center p-2">
-                                    {item.phone_numbers.map((phone, index) => (
-                                        <div key={index}>
-                                            {phone}
-                                            {index < item.phone_numbers.length - 1 && <br />}
-                                        </div>
-                                    ))}
+                                    {item.phone_numbers[0]}
+                                    {item.phone_numbers.length > 1 && (
+                                        <span className="text-gray-500 text-sm ml-2">
+                                            (+{item.phone_numbers.length - 1} more)
+                                        </span>
+                                    )}
                                 </td>
                                 <td className="text-center p-2">{item.opt_in ? 'Yes' : 'No'}</td>
                                 <td className="text-center p-2">{item.sent_optin ? 'Yes' : 'No'}</td>
                                 <td className="text-center p-2">{item.last_received || '-'}</td>
-                                <td className="text-center p-2">{item.list || '-'}</td>
+                                <td className="text-center p-2">{item.categories ? item.categories.join(', ') : '-'}</td>
                             </tr>
                         ))}
                     </tbody>

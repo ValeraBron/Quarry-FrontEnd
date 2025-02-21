@@ -1,46 +1,66 @@
 import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 
-export const Dropdown = ({ onClientSelect }) => {
+export const Dropdown = ({ onClientSelect, onSelect, error }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedClients, setSelectedClients] = useState([]);
-  const clients = useSelector((state) => state.data);
+  const clients = useSelector((state) => state.client.data);
 
   const toggleDropdown = () => {
     setIsOpen((prevState) => !prevState);
   };
 
   const handleCheckboxChange = (clientId) => {
-    setSelectedClients(prev => {
-      if (prev.includes(clientId)) {
-        return prev.filter(id => id !== clientId);
-      } else {
-        return [...prev, clientId];
-      }
-    });
+    const newSelectedClients = selectedClients.includes(clientId)
+      ? selectedClients.filter(id => id !== clientId)
+      : [...selectedClients, clientId];
+    
+    setSelectedClients(newSelectedClients);
+    
+    // Update parent state immediately
+    onClientSelect(newSelectedClients);
+    
+    // Clear error if at least one client is selected
+    if (newSelectedClients.length > 0) {
+      onSelect?.(newSelectedClients);
+    }
   };
 
   const handleSelectAll = () => {
-    if (selectedClients.length === clients.length) {
-      setSelectedClients([]);
-    } else {
-      setSelectedClients(clients.map(client => client.id));
+    const allClientIds = clients.map(client => client.id);
+    const newSelectedClients = selectedClients.length === clients.length ? [] : allClientIds;
+    
+    setSelectedClients(newSelectedClients);
+    
+    // Update parent state immediately
+    onClientSelect(newSelectedClients);
+    
+    // Clear error if at least one client is selected
+    if (newSelectedClients.length > 0) {
+      onSelect?.(newSelectedClients);
     }
+  };
+
+  const handleConfirmSelection = () => {
+    setIsOpen(false);
   };
 
   return (
     <div className="relative inline-block">
-      {/* Dropdown Button */}
       <button
         id="dropdownDefaultButton"
         onClick={toggleDropdown}
-        className="bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none font-medium rounded-lg px-5 py-2 text-center inline-flex items-center justify-between w-[220px]"
+        className={`bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none font-medium rounded-lg px-5 py-2 text-center inline-flex items-center justify-between w-[220px] ${
+          error ? 'border border-red-500' : ''
+        }`}
       >
-        {selectedClients.length > 0 
-          ? `Selected Clients (${selectedClients.length})`
-          : "Select Clients"}
+        <span className="truncate">
+          {selectedClients.length > 0 
+            ? `Selected Clients (${selectedClients.length})`
+            : "Select Clients"}
+        </span>
         <svg
-          className="w-2.5 h-2.5 ms-3"
+          className={`w-2.5 h-2.5 ms-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           aria-hidden="true"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -56,47 +76,47 @@ export const Dropdown = ({ onClientSelect }) => {
         </svg>
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute z-10 bg-white divide-y divide-gray-100 rounded-sm shadow-sm w-[250px]">
-          <ul
-            className="py-2 text-sm text-gray-700"
-            aria-labelledby="dropdownDefaultButton"
-          >
-            <li className="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-200 transition-all border-b">
+        <div className="absolute z-10 bg-white divide-y divide-gray-100 rounded-sm shadow-sm w-[300px] mt-1">
+          <ul className="max-h-[200px] overflow-y-auto">
+            <li 
+              className="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-100 transition-all border-b"
+              onClick={handleSelectAll}
+            >
               <input 
                 type="checkbox" 
-                checked={false}
-                // checked={selectedClients.length === clients.length}
+                checked={selectedClients.length === clients?.length}
                 onChange={handleSelectAll}
+                onClick={(e) => e.stopPropagation()}
               />
-              <span className="block text-gray-500">
+              <span className="block text-gray-700 font-medium">
                 Select All
               </span>
             </li>
-            {clients.map((client) => (
-              
+            {clients?.map((client, index) => (
               <li 
                 key={client.id}
-                className="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-200 transition-all border-b"
+                className="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-100 transition-all"
+                onClick={() => handleCheckboxChange(client.id)}
               >
                 <input 
                   type="checkbox"
                   checked={selectedClients.includes(client.id)}
                   onChange={() => handleCheckboxChange(client.id)}
+                  onClick={(e) => e.stopPropagation()}
                 />
-                <span className="block text-gray-500">
-                  {`Client ${client.id} (${client.phoneNumbers[0]})`}
+                <span className="block text-gray-600">
+                  {`Client ${index + 1}`} ({client.phone_numbers[0]})
                 </span>
               </li>
             ))}
           </ul>
 
           <button 
-            onClick={() => onClientSelect(selectedClients)}
+            onClick={handleConfirmSelection}
             className='bg-green-500 hover:bg-green-600 text-white text-center w-full py-2 text-lg font-medium transition-colors'
           >
-            Confirm Selection
+            Close ({selectedClients.length})
           </button>
         </div>
       )}
