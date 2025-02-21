@@ -275,7 +275,7 @@ export const NotificationsTable = () => {
     }
     const handlerUpdateLastMessage = async (message) => {
         if (!turnOnEdit) return;
-        console.log("message: ", message);
+        // console.log("message: ", message);
         dispatch(loadingOn())
         await updateLastMessage(turnOnEdit, message)
         dispatch(loadingOff())

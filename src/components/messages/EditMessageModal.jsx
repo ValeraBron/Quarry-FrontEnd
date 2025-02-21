@@ -8,14 +8,14 @@ export const EditMessageModal = ({
     onClose,
     onSubmit,
     message,
-    clients,
+    categories
 }) => {
-    const [selectedClients, setSelectedClients] = useState([]);
+    const [selectedCategories, setSelectedCategories] = useState([]);
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedTime, setSelectedTime] = useState('');
     const [editMessage, setEditMessage] = useState('');
     const [errors, setErrors] = useState({
-        client: false,
+        category: false,
         message: false,
         date: false,
         time: false
@@ -26,23 +26,20 @@ export const EditMessageModal = ({
 
     useEffect(() => {
         if (message) {
-            // Extract client IDs from phone numbers
-            const clientIds = clients
-                .filter(client => message.phone_numbers.some(phone => client.phone_numbers.includes(phone)))
-                .map(client => client.id);
-            
+            // Extract category IDs from phone numbers
+            // console.log("message: ", message);
             const datetime = new Date(message.qued_timestamp);
             
-            setSelectedClients(clientIds);
+            setSelectedCategories(message.categories);
             setSelectedDate(datetime.toISOString().split('T')[0]);
             setSelectedTime(datetime.toTimeString().slice(0, 5));
             setEditMessage(message.last_message);
         }
-    }, [message, clients]);
+    }, [message, categories]);
 
     const handleSubmit = () => {
         const newErrors = {
-            client: !selectedClients || selectedClients.length === 0,
+            category: !selectedCategories || selectedCategories.length === 0,
             message: !editMessage.trim(),
             date: !selectedDate,
             time: !selectedTime
@@ -55,16 +52,12 @@ export const EditMessageModal = ({
         }
 
         const scheduledDateTime = `${selectedDate}T${selectedTime}`;
-        const phoneNumbers = clients
-            .filter(client => selectedClients.includes(client.id))
-            .map(client => client.phone_numbers)
-            .flat();
 
         onSubmit({
             id: message.id,
-            message: editMessage.trim(),
-            scheduled_time: scheduledDateTime,
-            phone_numbers: phoneNumbers,
+            last_message: editMessage.trim(),
+            qued_timestamp: scheduledDateTime,
+            categories: selectedCategories,
         });
     };
 
@@ -87,14 +80,15 @@ export const EditMessageModal = ({
                     <div className="flex items-center gap-4">
                         <div className="flex-shrink-0">
                             <Dropdown 
-                                id='dropdown-clients-edit'
-                                clients={clients}
-                                onClientSelect={setSelectedClients}
-                                onSelect={() => setErrors(prev => ({...prev, client: false}))}
-                                error={errors.client}
-                                initialSelected={selectedClients}
+                                id='dropdown-categories-edit'
+                                categories={categories}
+                                selectedValue={selectedCategories}
+                                onCategorySelect={(newSelectedCategories) => {
+                                    setSelectedCategories(newSelectedCategories);
+                                }}
+                                onSelect={() => setErrors(prev => ({...prev, category: false}))}
                             />
-                            {errors.client && <p className="text-red-500 text-sm mt-1">Please select a client</p>}
+                            {errors.category && <p className="text-red-500 text-sm mt-1">Please select a category</p>}
                         </div>
 
                         <div id='calendar-container' onClick={handleClickCalendar} className='cursor-pointer flex-shrink-0'>
@@ -150,7 +144,7 @@ export const EditMessageModal = ({
                                 placeholder='Message...'
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
-                                {editMessage.length}/150
+                                {editMessage?.length}/150
                             </span>
                         </div>
                         {errors.message && <p className="text-red-500 text-sm mt-1">Please enter a message</p>}

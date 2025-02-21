@@ -5,13 +5,13 @@ export class WebSocketManager {
     fns;
 
     constructor() {
-        console.log("API: ", API)
+        // console.log("API: ", API)
         this.socket = new WebSocket(API);
         this.fns = {}
 
         this.socket.addEventListener("message", event => {
             const data = JSON.parse(event.data)
-            
+            console.log("Message from server: ", data)
             if (this.fns[data.type]) {
                 this.fns[data.type].forEach((item) => {
                     item.cb(data.data)

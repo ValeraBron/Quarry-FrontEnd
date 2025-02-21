@@ -5,8 +5,9 @@ import { Navbar } from '../common/Navbar'
 import { Dropdown } from './Dropdown'
 import { setMessages } from '../../store/messageSlice'
 import { getMessages, sendSms, deleteMessage, addMessage, updateMessage } from '../../services/messages'
-import { getClients } from '../../services/clients'
+import { getClients, getCustomerCategories } from '../../services/clients'
 import { setClients } from '../../store/clientSlice'
+import { setCategories } from '../../store/categorySlice'
 import moment from 'moment'
 import { DATE_FORMAT_CLIENT, DATE_TIME_FORMAT_CLIENT } from '../../constants'
 import { CountdownTimer } from './CountDown'
@@ -23,17 +24,19 @@ export const MessagesTable = () => {
     const dispatch = useDispatch()
     const messages = useSelector(state => state.message.data)
     const clients = useSelector(state => state.client.data)
+    const categories = useSelector(state => state.category.categories)
     const calendarRef = useRef(null);
     const timeRef = useRef(null);
     const [refetch, setRefetch] = useState(false)
     const messageRef = useRef(messages);
     const clientRef = useRef(clients);
+    const categoryRef = useRef(categories);
     const [message, setMessage] = useState('');
     const [selectedTime, setSelectedTime] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
-    const [selectedClients, setSelectedClients] = useState([]);
+    const [selectedCategories, setSelectedCategories] = useState([]);
     const [errors, setErrors] = useState({
-        client: false,
+        category: false,
         message: false,
         date: false,
         time: false
@@ -44,22 +47,18 @@ export const MessagesTable = () => {
     useEffect(() => {
         messageRef.current = messages;
         clientRef.current = clients;
-    }, [messages, clients])
+        categoryRef.current = categories;
+    }, [messages, clients, categories])
 
     useEffect(() => {
-        fetchmessage();
-        fetchClients();
-        messages.forEach((item) => {
-            if (new Date(item.qued_timestamp) < new Date() && item.message_status === 0) {
-              //  handleSendSms(item.id);
-            }
-        })
+        dispatch(loadingOn());
+        fetchData();
+        dispatch(loadingOff());
     }, [refetch])
 
     useEffect(() => {
         const websocketManager = new WebSocketManager();
         const id = Date.now();
-    
         websocketManager.addFns("MESSAGE_UPDATE", (messageInfo) => {
             if (!messageRef.current) return;
     
@@ -68,50 +67,25 @@ export const MessagesTable = () => {
                 return updatedItem ? { ...info, num_sent: updatedItem.num_sent } : info;
             });
             
-            dispatch(setMessages(messageArr));
+            // dispatch(setMessages(messageArr));
         }, id);
     
         return () => {
             websocketManager.removeFns("MESSAGE_UPDATE", id);
-            // websocketManager.closeSocket();
+            websocketManager.closeSocket();
         };
     }, []);
     
+    const fetchData = async () => {
+        const clientsData = await getClients();
+        const categoriesData = await getCustomerCategories();
+        const messagesData = await getMessages();
 
-    const fetchmessage = async () => {
-        dispatch(loadingOn());
-        let res = await getMessages();
+        if (clientsData) dispatch(setClients(clientsData));
+        if (categoriesData) dispatch(setCategories(categoriesData));
+        if (messagesData) dispatch(setMessages(messagesData));
+    };
 
-        if (res.detail === "Could not validate credentials") {
-            alert('Unauthorized user!');
-            navigate('/signup')
-        }
-
-        if (res) {
-            if (Array.isArray(res)) {
-                // console.log("rs: ", res);
-                dispatch(setMessages(res))
-            }
-        }
-        dispatch(loadingOff())
-    }
-
-    const fetchClients = async () => {
-        dispatch(loadingOn());
-        let res = await getClients();
-
-        if(res.detail === "Could not validate credentials") {
-            alert('Unauthorized user!');
-            navigate('/signup')
-        }
-
-        if(res) {
-            if(Array.isArray(res)) {
-                dispatch(setClients(res));
-            }
-        }
-       dispatch(loadingOff());
-    }
 
     const handleClickCalendar = () => {
         calendarRef.current.showPicker();
@@ -141,24 +115,21 @@ export const MessagesTable = () => {
 
     const handleSendSms = async (messageId) => {
         //dispatch(loadingOn());
-        const res = sendSms(messageId);
-
-        if (res.detail === "Could not validate credentials") {
-            alert('Unauthorized user!');
-            navigate('/signup')
-        }
+    
+        const res = await sendSms(messageId);
 
         if (res.success) {
             toast.dismiss()
             toast.success("Successfully send the sms!");
-            setRefetch(!refetch);
+            fetchData();
+            // setRefetch(!refetch);
         }
-        //dispatch(loadingOff());
+       // dispatch(loadingOff());
     }
 
     const handleMessageSubmit = async () => {
         const newErrors = {
-            client: !selectedClients || selectedClients.length === 0,
+            category: !selectedCategories || selectedCategories.length === 0,
             message: !message.trim(),
             date: !selectedDate,
             time: !selectedTime
@@ -170,23 +141,27 @@ export const MessagesTable = () => {
             return;
         }
 
-        //dispatch(loadingOn());
         try {
-            const scheduledDateTime = `${selectedDate}T${selectedTime}`;
+            const scheduledDateTime = `${selectedDate}T${selectedTime}`;    
+            // Get unique phone numbers from selected categories
             const phoneNumbers = clients
-                .filter(client => selectedClients.includes(client.id))
-                .map(client => client.phone_numbers)
-                .flat();
-           
-            //     return selectedClients.some(selectedId => selectedId === client.id);
-            // }).map(client => client.phone_number);
+                .filter(client => 
+                    selectedCategories.some(categoryId => 
+                        client.categories.includes(categoryId)
+                    )
+                )
+                .flatMap(client => client.phone_numbers) // Use flatMap if phone_numbers is an array
+                .filter((number, index, self) => self.indexOf(number) === index); // Remove duplicates
+            
             const messageData = {
-                message: message.trim(),
-                scheduled_time: scheduledDateTime,
+                last_message: message.trim(),
+                qued_timestamp: scheduledDateTime,
+                categories: selectedCategories,
                 phone_numbers: phoneNumbers
             };
-            console.log("message data: ", messageData);
-            // const phoneNumbers = clients.filter(client => {
+
+            console.log("Sending message data: ", messageData); // Debug log
+
             const res = await addMessage(messageData);
             
             if (res.message === "Raw data processed successfully") {
@@ -194,9 +169,9 @@ export const MessagesTable = () => {
                 setMessage('');
                 setSelectedDate('');
                 setSelectedTime('');
-                setSelectedClients([]);
+                setSelectedCategories([]);
                 setErrors({
-                    client: false,
+                    category: false,
                     message: false,
                     date: false,
                     time: false
@@ -221,13 +196,23 @@ export const MessagesTable = () => {
     const handleEditSubmit = async (editedData) => {
         dispatch(loadingOn());
         try {
-
+            const phoneNumbers = clients
+            .filter(client => 
+                selectedCategories.some(categoryId => 
+                    client.categories.includes(categoryId)
+                )
+            )
+            .flatMap(client => client.phone_numbers) // Use flatMap if phone_numbers is an array
+            .filter((number, index, self) => self.indexOf(number) === index); // Remove duplicates
+            // Remove duplicate phone numbers
+           
+            
             const messageData = 
             {
-                message: editedData.message,
-                scheduled_time: editedData.scheduled_time,
-                phone_numbers: editedData.phone_numbers,
-                message_status: editedData.message_status
+                last_message: editedData.last_message,
+                qued_timestamp: editedData.qued_timestamp,
+                categories: editedData.categories,
+                phone_numbers: phoneNumbers
             };
             const res = await updateMessage(editedData.id, messageData);
             console.log("res: ", res);
@@ -235,21 +220,10 @@ export const MessagesTable = () => {
             if (res.success) {
                 toast.success("Message updated successfully!");
                 // Update the messages in the store
-                const updatedMessages = messages.map(msg => 
-                    msg.id === editedData.id 
-                        ? {
-                            ...msg,
-                            last_message: editedData.message,
-                            qued_timestamp: editedData.scheduled_time,
-                            phone_numbers: editedData.phone_numbers
-                        } 
-                        : msg
-                );
-                dispatch(setMessages(updatedMessages));
-                
+                fetchData();
                 setIsEditModalOpen(false);
                 setEditingMessage(null);
-                setRefetch(!refetch);
+                // setRefetch(!refetch);
             } else {
                 toast.error(res.message || "Failed to update message");
             }
@@ -269,22 +243,22 @@ export const MessagesTable = () => {
                     <div id='message-form-content' className='flex flex-1 items-center gap-4'>
                         <div className="flex-shrink-0">
                             <Dropdown 
-                                id='dropdown-clients'
-                                clients={clients}
+                                id='dropdown-categories'
+                                categories={categories}
                                 onClick={(e) => {
                                     const status = selectedClients;
                                     if (status.length > 0) {
                                         setSelectedClients(status);
                                     }
                                 }}
-                                onClientSelect={(selectedClients) => {
-                                    setSelectedClients(selectedClients);
-                                    console.log("selectedClients: ", selectedClients)
+                                selectedValue={selectedCategories}
+                                onCategorySelect={(newSelectedCategories) => {
+                                // console.log("SelectedCategories: ", newSelectedCategories);
+                                setSelectedCategories(newSelectedCategories);
                                 }}
-                                onSelect={() => setErrors(prev => ({...prev, client: false}))}
-                                error={errors.client}
+                                onSelect={() => setErrors(prev => ({...prev, category: false}))}
                             />
-                            {errors.client && <p className="text-red-500 text-sm mt-1">Please select a client</p>}
+                            {errors.category && <p className="text-red-500 text-sm mt-1">Please select a category</p>}
                         </div>
 
                         <div id='calendar-container' onClick={handleClickCalendar} className='cursor-pointer flex-shrink-0'>
@@ -383,7 +357,8 @@ export const MessagesTable = () => {
                 <table className="w-[100%]">
                     <thead className=" bg-red-700">
                         <tr>
-                            <th className="w-[15%] pl-8 py-2 text-left text-lg text-white">Created On</th>
+                            <th className="w-[12.5%] pl-8 py-2 text-left text-lg text-white">Created On</th>
+                            <th className="w-[12.5%] text-white text-lg text-left">Category</th>
                             <th className="w-[15%] text-white text-lg text-left">Scheduled</th>
                             <th className="w-[35%] text-white text-lg text-left">Message</th>
                             {/* <th className="w-[10%] text-white text-lg text-left">Image</th> */}
@@ -408,9 +383,10 @@ export const MessagesTable = () => {
                             return (
                                 <React.Fragment key={`parent-${messageIndex}`}>
                                     <tr className={`bg-red-700 border-t-2 border-t-white`}>
-                                        <td className="text-lg pl-8 py-2 font-semibold text-white">{moment.utc(item.created_at).format(DATE_FORMAT_CLIENT)}</td>
-                                        <td className="text-lg font-semibold text-white text-left">{moment.utc(item.qued_timestamp).format(DATE_TIME_FORMAT_CLIENT)}</td>
-                                        <td className="text-lg font-semibold text-white text-left">
+                                        <td className="text-lg pl-8 py-2 text-white">{moment.utc(item.created_at).format(DATE_FORMAT_CLIENT)}</td>
+                                        <td className="text-lg  text-white text-left">{categories.filter(category => item.categories.includes(category.id)).map(category => category.name) .join(', ')}</td>
+                                        <td className="text-lg  text-white text-left">{moment.utc(item.qued_timestamp).format(DATE_TIME_FORMAT_CLIENT)}</td>
+                                        <td className="text-lg  text-white text-left">
                                             {item.last_message}
                                         </td>
                                         {/* <td className="text-lg font-semibold text-white text-left">
@@ -419,7 +395,7 @@ export const MessagesTable = () => {
                                         <td className="text-lg font-semibold text-left">
                                             {
                                                 new Date(item.qued_timestamp) > new Date() ? (
-                                                    <CountdownTimer targetDate={item.qued_timestamp} onComplete={() => handleSendSms(item.id)} />
+                                                    <CountdownTimer targetDate={item.qued_timestamp}/>
                                                 ) : (
                                                     <div className='bg-green-500 px-1 py-[2px]'>
                                                         <p className='text-center text-white'>{`${item.num_sent || 0}/${item.phone_numbers?.length}`}</p>
@@ -466,7 +442,7 @@ export const MessagesTable = () => {
                 }}
                 onSubmit={handleEditSubmit}
                 message={editingMessage}
-                clients={clients}
+                categories={categories}
             />
         </div>
     )

@@ -3,7 +3,8 @@ import { Dropdown } from './Dropdown'
 import { useDispatch, useSelector } from 'react-redux'
 import { loadingOff, loadingOn } from '../../store/authSlice'
 import { setClients } from '../../store/clientSlice'
-import { getClients} from '../../services/clients'
+import { setCategories } from '../../store/categorySlice'
+import { getClients, getCustomerCategories } from '../../services/clients'
 import { Navbar } from '../common/Navbar'
 import { FiFile } from 'react-icons/fi'
 import { addClient } from '../../services/clients'
@@ -14,7 +15,7 @@ export const ClientsTable = () => {
     const [selectedCategories, setSelectedCategories] = useState([])
     const dispatch = useDispatch()
     const clients = useSelector(state => state.client.data)
-
+    const categories = useSelector(state => state.category.categories)
 
     useEffect(() => {
         fetchData();
@@ -22,17 +23,18 @@ export const ClientsTable = () => {
 
     const fetchData = async () => {
         dispatch(loadingOn());
-        let res = await getClients();
-    
-        if (res.detail === "Could not validate credentials") {
+        let clients = await getClients();
+        let categories = await getCustomerCategories();
+        
+        if (clients.detail === "Could not validate credentials") {
             alert('Unauthorized user!');
             navigate('/signup')
         }
 
-        if (res) {
-            if (Array.isArray(res)) {
-                // console.log("rs: ", res);
-                dispatch(setClients(res))
+        if (clients) {
+            if (Array.isArray(clients)) {
+                dispatch(setClients(clients))
+                dispatch(setCategories(categories))
             }
         }
         dispatch(loadingOff())
@@ -75,7 +77,6 @@ export const ClientsTable = () => {
             };
             
             const response = await addClient(clientData);
-            console.log("response: ", response);
             if (response.message !== "Customer added successfully" && response.status !== 200) {
                 throw new Error('Failed to add client');
             }
@@ -139,7 +140,6 @@ export const ClientsTable = () => {
     const handleCategoryChange = (categories) => {
         setSelectedCategories(categories);
         // You can perform any additional actions here when categories change
-        // console.log('Selected categories:', categories);
     }
 
     return (
@@ -148,7 +148,11 @@ export const ClientsTable = () => {
 
             <div>
                 <div className='flex items-center gap-5 bg-white px-5 mb-[2px] py-1'>
-                    <Dropdown onCategoryChange={handleCategoryChange} />
+                    <Dropdown 
+                    onCategorySelect={(newSelectedCategories) => {
+                        setSelectedCategories(newSelectedCategories);
+                    }}
+                    />
 
                     <div className='flex flex-col gap-2'>
                         <div className='flex items-center gap-2'>
@@ -158,7 +162,7 @@ export const ClientsTable = () => {
                                 placeholder='Phone Numbers (e.g. +1 098 765 4321)'
                                 value={phoneNumbers.join(',')}
                                 onChange={(e) => {
-                                    const numbers = e.target.value.split(',').map(n => n.trim());
+                                    const numbers = e.target.value.split(',');
                                     setPhoneNumbers(numbers);
                                 }}
                             />
@@ -206,20 +210,22 @@ export const ClientsTable = () => {
 
                     <tbody className="table-body-transparent">
                         {clients.map((item, index) => (
-                            <tr key={index} className="bg-green-50 hover:bg-green-100">
-                                <td className="text-center p-2">{index + 1}</td>
-                                <td className="text-center p-2">
+                            <tr key={index} className="bg-red-700 border-t-2 border-t-white">
+                                <td className="text-center p-2 text-white">{index + 1}</td>
+                                <td className="text-center p-2 text-white">
                                     {item.phone_numbers[0]}
                                     {item.phone_numbers.length > 1 && (
-                                        <span className="text-gray-500 text-sm ml-2">
+                                        <span className="text-gray-500 text-sm ml-2 text-white">
                                             (+{item.phone_numbers.length - 1} more)
                                         </span>
                                     )}
                                 </td>
-                                <td className="text-center p-2">{item.opt_in ? 'Yes' : 'No'}</td>
-                                <td className="text-center p-2">{item.sent_optin ? 'Yes' : 'No'}</td>
-                                <td className="text-center p-2">{item.last_received || '-'}</td>
-                                <td className="text-center p-2">{item.categories ? item.categories.join(', ') : '-'}</td>
+                                <td className="text-center p-2 text-white">{item.opt_in ? 'Yes' : 'No'}</td>
+                                <td className="text-center p-2 text-white">{item.sent_optin ? 'Yes' : 'No'}</td>
+                                <td className="text-center p-2 text-white">{item.last_received || '-'}</td>
+                                <td className="text-center p-2 text-white">
+                                    {item.categories ? categories.filter(cat => item.categories.includes(cat.id)).map(cat => cat.name).join(', ') : '-'}
+                                </td>
                             </tr>
                         ))}
                     </tbody>

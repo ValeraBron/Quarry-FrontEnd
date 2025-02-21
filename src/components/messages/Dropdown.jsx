@@ -1,43 +1,43 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 
-export const Dropdown = ({ onClientSelect, onSelect, error }) => {
+export const Dropdown = ({ onCategorySelect, onSelect, selectedValue}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedClients, setSelectedClients] = useState([]);
-  const clients = useSelector((state) => state.client.data);
+  const [selectedCategories, setSelectedCategories] = useState(selectedValue || []);
+  const categories = useSelector((state) => state.category.categories);
 
   const toggleDropdown = () => {
     setIsOpen((prevState) => !prevState);
   };
 
-  const handleCheckboxChange = (clientId) => {
-    const newSelectedClients = selectedClients.includes(clientId)
-      ? selectedClients.filter(id => id !== clientId)
-      : [...selectedClients, clientId];
+  const handleCheckboxChange = (categoryId) => {
+    const newSelectedCategories = selectedCategories.includes(categoryId)
+      ? selectedCategories.filter(id => id !== categoryId)
+      : [...selectedCategories, categoryId];
     
-    setSelectedClients(newSelectedClients);
+    setSelectedCategories(newSelectedCategories);
     
     // Update parent state immediately
-    onClientSelect(newSelectedClients);
-    
-    // Clear error if at least one client is selected
-    if (newSelectedClients.length > 0) {
-      onSelect?.(newSelectedClients);
+    onCategorySelect(newSelectedCategories);
+
+    // Clear error if at least one category is selected
+    if (newSelectedCategories.length > 0) {
+      onSelect?.(newSelectedCategories);
     }
   };
 
   const handleSelectAll = () => {
-    const allClientIds = clients.map(client => client.id);
-    const newSelectedClients = selectedClients.length === clients.length ? [] : allClientIds;
+    const allCategoryIds = categories.map(category => category.id);
+    const newSelectedCategories = selectedCategories.length === categories.length ? [] : allCategoryIds;
     
-    setSelectedClients(newSelectedClients);
+    setSelectedCategories(newSelectedCategories);
     
     // Update parent state immediately
-    onClientSelect(newSelectedClients);
+    onCategorySelect(newSelectedCategories);
     
-    // Clear error if at least one client is selected
-    if (newSelectedClients.length > 0) {
-      onSelect?.(newSelectedClients);
+    // Clear error if at least one category is selected
+    if (newSelectedCategories.length > 0) {
+      onSelect?.(newSelectedCategories);
     }
   };
 
@@ -50,14 +50,12 @@ export const Dropdown = ({ onClientSelect, onSelect, error }) => {
       <button
         id="dropdownDefaultButton"
         onClick={toggleDropdown}
-        className={`bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none font-medium rounded-lg px-5 py-2 text-center inline-flex items-center justify-between w-[220px] ${
-          error ? 'border border-red-500' : ''
-        }`}
+        className={`bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none font-medium rounded-lg px-5 py-2 text-center inline-flex items-center justify-between w-[220px]`}
       >
         <span className="truncate">
-          {selectedClients.length > 0 
-            ? `Selected Clients (${selectedClients.length})`
-            : "Select Clients"}
+          {selectedCategories.length > 0 
+            ? `Selected Categories (${selectedCategories.length})`
+            : "Select Categories"}
         </span>
         <svg
           className={`w-2.5 h-2.5 ms-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -85,7 +83,7 @@ export const Dropdown = ({ onClientSelect, onSelect, error }) => {
             >
               <input 
                 type="checkbox" 
-                checked={selectedClients.length === clients?.length}
+                checked={selectedCategories.length === categories?.length}
                 onChange={handleSelectAll}
                 onClick={(e) => e.stopPropagation()}
               />
@@ -93,20 +91,20 @@ export const Dropdown = ({ onClientSelect, onSelect, error }) => {
                 Select All
               </span>
             </li>
-            {clients?.map((client, index) => (
+            {categories?.map((category, index) => (
               <li 
-                key={client.id}
+                key={category.id}
                 className="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-100 transition-all"
-                onClick={() => handleCheckboxChange(client.id)}
+                onClick={() => handleCheckboxChange(category.id)}
               >
                 <input 
                   type="checkbox"
-                  checked={selectedClients.includes(client.id)}
-                  onChange={() => handleCheckboxChange(client.id)}
+                  checked={selectedCategories.includes(category.id)}
+                  onChange={() => handleCheckboxChange(category.id)}
                   onClick={(e) => e.stopPropagation()}
                 />
                 <span className="block text-gray-600">
-                  {`Client ${index + 1}`} ({client.phone_numbers[0]})
+                  {category.name}
                 </span>
               </li>
             ))}
@@ -116,7 +114,7 @@ export const Dropdown = ({ onClientSelect, onSelect, error }) => {
             onClick={handleConfirmSelection}
             className='bg-green-500 hover:bg-green-600 text-white text-center w-full py-2 text-lg font-medium transition-colors'
           >
-            Close ({selectedClients.length})
+            Close ({selectedCategories.length})
           </button>
         </div>
       )}

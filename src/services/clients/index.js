@@ -85,3 +85,45 @@ export const deleteClient = async (customer_id) => {
     }
 }
 
+export const getCustomerCategories = async () => {
+    try {
+        const token = localStorage.getItem('access_token') || '';
+        const res = await fetch(API + 'customer-categories', {
+            headers: {
+                authorization: `Bearer ${token}`
+            }
+        });
+        
+        const json = await res.json();
+        if (json.detail === "Could not validate credentials") {
+            localStorage.removeItem('access_token');
+        }
+        return json;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const addCustomerCategory = async (payload) => {
+    try {
+        const token = localStorage.getItem('access_token') || '';
+        const res = await fetch(API + 'add-customer-category', {
+            method: 'POST',
+            headers: {
+                authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+        if (json.detail === "Could not validate credentials") {
+            localStorage.removeItem('access_token');
+        }
+        return json;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+

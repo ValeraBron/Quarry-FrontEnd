@@ -61,6 +61,7 @@ export const deleteMessage = async (message_id) => {
 export const addMessage = async (data) => {
     try {
         const token = localStorage.getItem('access_token') || '';
+
         const res = await fetch(API + 'add-message', {
             method: 'POST',
             headers: {
@@ -70,7 +71,7 @@ export const addMessage = async (data) => {
             body: JSON.stringify({
                 last_message: data.message,
                 qued_timestamp: data.scheduled_time,
-                image_url: null,
+                categories: data.categories,
                 phone_numbers: data.phone_numbers,
                 created_at: new Date().toISOString()
             })
@@ -88,7 +89,7 @@ export const addMessage = async (data) => {
 export const updateMessage = async (messageId, messageData) => {
     try {
         const token = localStorage.getItem('access_token') || '';
-        const res = await fetch(API +`update-message?message_id=${message_id}`, {
+        const res = await fetch(API +`update-message?message_id=${messageId}`, {
             method: 'POST',
             headers: {
                 authorization: `Bearer ${token}`,
