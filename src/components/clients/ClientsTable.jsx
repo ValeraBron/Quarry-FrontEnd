@@ -16,13 +16,16 @@ export const ClientsTable = () => {
     const dispatch = useDispatch()
     const clients = useSelector(state => state.client.data)
     const categories = useSelector(state => state.category.categories)
+    const [refetch, setRefetch] = useState(false)
 
     useEffect(() => {
+        dispatch(loadingOn());
         fetchData();
-    }, [])
+        dispatch(loadingOff())
+    }, [refetch])
 
     const fetchData = async () => {
-        dispatch(loadingOn());
+        
         let clients = await getClients();
         let categories = await getCustomerCategories();
         
@@ -37,7 +40,7 @@ export const ClientsTable = () => {
                 dispatch(setCategories(categories))
             }
         }
-        dispatch(loadingOff())
+        
     }
 
     const handleAddPhoneInput = () => {
@@ -84,14 +87,15 @@ export const ClientsTable = () => {
             setPhoneNumbers(['']);
             setSelectedCategories([]);
             setFilePath(null);
-            
+
             // Optionally reset categories
             // setSelectedCategories([]);
         } catch (error) {
             console.error('Error adding client:', error);
             alert('Failed to add client');
         } finally {
-            fetchData();
+            console.log("handle add client")
+            setRefetch(!refetch);
             dispatch(loadingOff());
         }
     }
@@ -204,8 +208,6 @@ export const ClientsTable = () => {
                         <tr>
                             <th className="w-[10%] text-center p-2 text-lg text-white">ID</th>
                             <th className="w-[30%] text-center p-2 text-lg text-white">Cell Phone</th>
-                            <th className="w-[10%] text-white text-lg text-center">Opt In</th>
-                            <th className="w-[10%] text-white text-lg text-center">Sent Optin</th>
                             <th className="w-[10%] text-white text-lg text-center">Last Received</th>
                             <th className="w-[20%] text-white text-lg text-center">List</th>
                         </tr>
@@ -223,8 +225,6 @@ export const ClientsTable = () => {
                                         </span>
                                     )}
                                 </td>
-                                <td className="text-center p-2 text-white">{item.opt_in ? 'Yes' : 'No'}</td>
-                                <td className="text-center p-2 text-white">{item.sent_optin ? 'Yes' : 'No'}</td>
                                 <td className="text-center p-2 text-white">{item.last_received || '-'}</td>
                                 <td className="text-center p-2 text-white">
                                     {item.categories ? categories.filter(cat => item.categories.includes(cat.id)).map(cat => cat.name).join(', ') : '-'}

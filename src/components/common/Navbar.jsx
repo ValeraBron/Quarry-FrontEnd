@@ -13,14 +13,13 @@ export const Navbar = () => {
 
             <div className="pt-16" >
                 <div className="flex items-center gap-1">
-                    <div className="py-2 px-4 bg-yellow-400 hover:bg-yellow-500 inline-block mb-[1px] cursor-pointer" onClick={() => () => { }}>
+                    <div className={`py-2 px-4 ${window.location.pathname === '/messages' ? 'bg-red-700' : 'bg-yellow-400 hover:bg-yellow-500'} inline-block cursor-pointer`}>
                         <Link to="/messages"><p className="text-xl font-semibold text-white">MESSAGES</p></Link>
                     </div>
-                    <div className="py-2 px-4 bg-red-700 hover:bg-red-800 inline-block mb-[1px] mx-1 cursor-pointer" onClick={() => () => { }}>
+                    <div className={`py-2 px-4 ${window.location.pathname === '/clients' ? 'bg-red-700' : 'bg-green-700 hover:bg-green-800'} inline-block cursor-pointer`}>
                         <Link to="/clients"><p className="text-xl font-semibold text-white">CLIENT LIST</p></Link>
                     </div>
-
-                    <div className="py-2 px-4 bg-blue-700 hover:bg-blue-800 inline-block mb-[1px] mx-1 cursor-pointer" onClick={() => () => { }}>
+                    <div className={`py-2 px-4 ${window.location.pathname === '/phones' ? 'bg-red-700' : 'bg-blue-700 hover:bg-blue-800'} inline-block cursor-pointer`}>
                         <Link to="/phones"><p className="text-xl font-semibold text-white">PHONES</p></Link>
                     </div>
                 </div>

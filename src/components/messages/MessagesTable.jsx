@@ -118,8 +118,7 @@ export const MessagesTable = () => {
         if (res.success) {
             toast.dismiss()
             toast.success("Successfully send the sms!");
-            fetchData();
-            // setRefetch(!refetch);
+            setRefetch(!refetch);
         }
        // dispatch(loadingOff());
     }
@@ -217,10 +216,9 @@ export const MessagesTable = () => {
             if (res.success) {
                 toast.success("Message updated successfully!");
                 // Update the messages in the store
-                fetchData();
                 setIsEditModalOpen(false);
                 setEditingMessage(null);
-                // setRefetch(!refetch);
+                setRefetch(!refetch);
             } else {
                 toast.error(res.message || "Failed to update message");
             }
