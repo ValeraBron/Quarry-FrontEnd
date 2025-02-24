@@ -19,6 +19,10 @@ export const Navbar = () => {
                     <div className="py-2 px-4 bg-red-700 hover:bg-red-800 inline-block mb-[1px] mx-1 cursor-pointer" onClick={() => () => { }}>
                         <Link to="/clients"><p className="text-xl font-semibold text-white">CLIENT LIST</p></Link>
                     </div>
+
+                    <div className="py-2 px-4 bg-blue-700 hover:bg-blue-800 inline-block mb-[1px] mx-1 cursor-pointer" onClick={() => () => { }}>
+                        <Link to="/phones"><p className="text-xl font-semibold text-white">PHONES</p></Link>
+                    </div>
                 </div>
             </div>
         </>

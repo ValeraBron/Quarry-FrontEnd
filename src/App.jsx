@@ -7,6 +7,7 @@ import { ForgotPassword } from './pages/ForgotPassword'
 import { PrivateRouter } from './pages/PrivateRouter'
 import { Messages } from './pages/Messages'
 import { Clients } from './pages/Clients'
+import { Phones } from './pages/Phones'  
 
 const router = createBrowserRouter([
   {
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
       {
         path: '/clients',
         element: <PrivateRouter><Clients /></PrivateRouter>
+      },
+      {
+        path: '/phones',
+        element: <PrivateRouter><Phones /></PrivateRouter>
       }
     ]
   }

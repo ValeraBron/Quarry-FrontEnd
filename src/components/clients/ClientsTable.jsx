@@ -82,6 +82,9 @@ export const ClientsTable = () => {
             }
 
             setPhoneNumbers(['']);
+            setSelectedCategories([]);
+            setFilePath(null);
+            
             // Optionally reset categories
             // setSelectedCategories([]);
         } catch (error) {

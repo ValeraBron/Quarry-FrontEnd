@@ -29,8 +29,6 @@ export const MessagesTable = () => {
     const timeRef = useRef(null);
     const [refetch, setRefetch] = useState(false)
     const messageRef = useRef(messages);
-    const clientRef = useRef(clients);
-    const categoryRef = useRef(categories);
     const [message, setMessage] = useState('');
     const [selectedTime, setSelectedTime] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
@@ -46,9 +44,7 @@ export const MessagesTable = () => {
 
     useEffect(() => {
         messageRef.current = messages;
-        clientRef.current = clients;
-        categoryRef.current = categories;
-    }, [messages, clients, categories])
+    }, [messages])
 
     useEffect(() => {
         dispatch(loadingOn());
@@ -77,6 +73,7 @@ export const MessagesTable = () => {
     }, []);
     
     const fetchData = async () => {
+       
         const clientsData = await getClients();
         const categoriesData = await getCustomerCategories();
         const messagesData = await getMessages();
