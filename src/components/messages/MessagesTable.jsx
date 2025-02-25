@@ -17,7 +17,7 @@ import { MdOutlineEdit } from "react-icons/md";
 import toast from 'react-hot-toast'
 import { FaRegCalendarDays } from "react-icons/fa6";
 import { IoMdTime } from "react-icons/io";
-import { WebSocketManager } from '../../services/ws'
+import { WebSocketManager_Message } from '../../services/ws'
 import { EditMessageModal } from './EditMessageModal';
 
 export const MessagesTable = () => {
@@ -39,6 +39,9 @@ export const MessagesTable = () => {
         date: false,
         time: false
     });
+
+    const ws_message = useRef(null);
+
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingMessage, setEditingMessage] = useState(null);
 
@@ -53,7 +56,7 @@ export const MessagesTable = () => {
     }, [refetch])
 
     useEffect(() => {
-        const websocketManager = new WebSocketManager();
+        const websocketManager = new WebSocketManager_Message();
         const id = Date.now();
         websocketManager.addFns("MESSAGE_UPDATE", (messageInfo) => {
             if (!messageRef.current) return;
@@ -62,13 +65,14 @@ export const MessagesTable = () => {
                 const updatedItem = messageInfo.find((item) => item.id === info.id);
                 return updatedItem ? { ...info, num_sent: updatedItem.num_sent } : info;
             });
-            
-            // dispatch(setMessages(messageArr));
+            ws_message.current = messageArr;
+            if (messageArr) dispatch(setMessages(messageArr));
         }, id);
     
+        ws_message.current = websocketManager;
         return () => {
-            websocketManager.removeFns("MESSAGE_UPDATE", id);
-            websocketManager.closeSocket();
+            ws_message.current.removeFns("MESSAGE_UPDATE", id);
+            ws_message.current.closeSocket();
         };
     }, []);
     
@@ -155,7 +159,6 @@ export const MessagesTable = () => {
                 categories: selectedCategories,
                 phone_numbers: phoneNumbers
             };
-
             console.log("Sending message data: ", messageData); // Debug log
 
             const res = await addMessage(messageData);
@@ -211,7 +214,6 @@ export const MessagesTable = () => {
                 phone_numbers: phoneNumbers
             };
             const res = await updateMessage(editedData.id, messageData);
-            console.log("res: ", res);
 
             if (res.success) {
                 toast.success("Message updated successfully!");
@@ -248,7 +250,6 @@ export const MessagesTable = () => {
                                 }}
                                 selectedValue={selectedCategories}
                                 onCategorySelect={(newSelectedCategories) => {
-                                // console.log("SelectedCategories: ", newSelectedCategories);
                                 setSelectedCategories(newSelectedCategories);
                                 }}
                                 onSelect={() => setErrors(prev => ({...prev, category: false}))}

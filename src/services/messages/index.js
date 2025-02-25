@@ -69,8 +69,8 @@ export const addMessage = async (data) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                last_message: data.message,
-                qued_timestamp: data.scheduled_time,
+                last_message: data.last_message,
+                qued_timestamp: data.qued_timestamp,
                 categories: data.categories,
                 phone_numbers: data.phone_numbers,
                 created_at: new Date().toISOString()

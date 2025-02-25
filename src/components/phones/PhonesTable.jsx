@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { loadingOff, loadingOn } from '../../store/authSlice'
 import { Navbar } from '../common/Navbar'
@@ -7,14 +7,21 @@ import { DATE_TIME_FORMAT_CLIENT } from '../../constants'
 import { getPhones } from '../../services/phone'
 import { setPhones } from '../../store/phoneSlice'
 import { Dropdown } from './DropDown'
+import { WebSocketManager_Phone } from '../../services/ws'
+import { EditOptinMessage } from './EditOptinMessage'
+import { updateOptinMessage, getOptinMessage } from '../../services/phone'
+import toast from 'react-hot-toast'
 
 export const PhonesTable = () => {
     const dispatch = useDispatch()
     const phones = useSelector(state => state.phone.data)
+    const phoneRef = useRef(phones)
     const [selectedStatuses, setSelectedStatuses] = useState([])
     const [currentPage, setCurrentPage] = useState(1)
     const [refetch, setRefetch] = useState(false)
     const itemsPerPage = 10
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [optinMessage, setOptinMessage] = useState('')
 
     useEffect(() => {
         dispatch(loadingOn());
@@ -22,9 +29,35 @@ export const PhonesTable = () => {
         dispatch(loadingOff())
     }, [refetch])
 
+    useEffect(() => {
+        phoneRef.current = phones;
+    }, [phones])
+
+    useEffect(() => {
+        // const websocketManager = new WebSocketManager_Phone();
+
+        // const id = Date.now();
+        // websocketManager.addFns("PHONE_UPDATE", (phoneInfo) => {
+        //     if (!phoneRef.current) return;
+    
+        //     const phoneArr = phoneRef.current.map((info) => {
+        //         const updatedItem = phoneInfo.find((item) => item.id === info.id);
+        //         return updatedItem ? { ...info, optin_status: updatedItem.optin_status, back_timestamp: updatedItem.back_timestamp } : info;
+        //     });
+            
+        //     // if (phoneArr) dispatch(setPhones(phoneArr));
+        // }, id);
+    
+        // return () => {
+        //     websocketManager.removeFns("PHONE_UPDATE", id);
+        //     websocketManager.closeSocket();
+        // };
+    }, []);
     const fetchData = async () => {
         const phoneData = await getPhones()
+        const optinMessage = await getOptinMessage()
         if (phoneData) dispatch(setPhones(phoneData))
+        if (optinMessage) setOptinMessage(optinMessage)
     }
 
     // Filter phones based on selected statuses
@@ -32,7 +65,6 @@ export const PhonesTable = () => {
         ? phones 
         : phones?.filter(phone => selectedStatuses.includes(phone.optin_status))
 
-    console.log("selectedStatuses ", selectedStatuses)
     // Calculate pagination
     const indexOfLastItem = currentPage * itemsPerPage
     const indexOfFirstItem = indexOfLastItem - itemsPerPage
@@ -42,6 +74,26 @@ export const PhonesTable = () => {
     const pageNumbers = []
     for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i)
+    }
+
+    const handleSubmit = async (editedData) => {
+        dispatch(loadingOn())
+        try {
+            if (editedData.optin_message) {
+                const res = await updateOptinMessage(editedData)
+            if (res.success) {
+                setIsEditModalOpen(false)
+                toast.success('Optin message updated successfully')
+                setRefetch(!refetch)
+            } else {
+                toast.error(res.message || "Failed to update message")
+            }
+
+        }
+        } catch (error) {
+            toast.error(error.message || "Failed to update message")
+        }
+        dispatch(loadingOff())
     }
 
     return (
@@ -57,7 +109,12 @@ export const PhonesTable = () => {
                                 onStatusSelect={setSelectedStatuses}
                             />
                         </div>
-                
+                        <button
+                            onClick={() => setIsEditModalOpen(true)}
+                            className="px-4 py-2 bg-red-700 text-white rounded hover:bg-red-800"
+                        >
+                            Edit Message
+                        </button>
                     </div>
                 </div>    
 
@@ -142,6 +199,15 @@ export const PhonesTable = () => {
                 <div className="text-center mt-2 text-white">
                     Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPhones?.length || 0)} of {filteredPhones?.length || 0} entries
                 </div>
+
+                {isEditModalOpen && (
+                    <EditOptinMessage
+                        isOpen={isEditModalOpen}
+                        onClose={() => setIsEditModalOpen(false)}
+                        onSubmit={handleSubmit}
+                        optinMessage={optinMessage}
+                    />
+                )}
             </div>
         </div>
     )

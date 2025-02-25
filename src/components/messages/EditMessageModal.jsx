@@ -29,13 +29,12 @@ export const EditMessageModal = ({
             // Extract category IDs from phone numbers
             // console.log("message: ", message);
             const datetime = new Date(message.qued_timestamp);
-            
             setSelectedCategories(message.categories);
             setSelectedDate(datetime.toISOString().split('T')[0]);
             setSelectedTime(datetime.toTimeString().slice(0, 5));
             setEditMessage(message.last_message);
         }
-    }, [message, categories]);
+    }, [message]);
 
     const handleSubmit = () => {
         const newErrors = {

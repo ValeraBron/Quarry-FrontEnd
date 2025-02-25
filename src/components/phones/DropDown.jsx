@@ -1,13 +1,15 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import PropTypes from 'prop-types';
-
+import { sendOptinMessages } from "../../services/phone";
 export const Dropdown = ({ onStatusSelect, selectedStatuses }) => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
+  const phones = useSelector(state => state.phone.data)
   const optinStatuses = [
     { id: 'Pending', name: 'Pending' },
     { id: 'Success', name: 'Success' },
-    { id: 'Refuse', name: 'Refuse' },
+    { id: 'Refused', name: 'Refused' },
   ];
 
   const toggleDropdown = () => {
@@ -26,13 +28,17 @@ export const Dropdown = ({ onStatusSelect, selectedStatuses }) => {
     setIsOpen(false);
   };
 
-  const handleSendOptinMessages = () => {
+  const handleSendOptinMessages = async () => {
     const hasValidStatus = selectedStatuses.some(status => 
-      status === 'pending' || status === 'refuse'
+      status === 'Pending' || status === 'Refused'
     );
     if (hasValidStatus) {
       // TODO: Implement send optin messages logic
-      console.log(`Sending optin messages to ${selectedStatuses.join(', ')} status phones`);
+      const pending_phones = phones.filter(phone => selectedStatuses.includes(phone.optin_status));
+      console.log('phones: ', pending_phones)
+
+      let res = await sendOptinMessages(pending_phones)
+      console.log('res: ', res)
     }
   };
 
@@ -111,7 +117,7 @@ export const Dropdown = ({ onStatusSelect, selectedStatuses }) => {
             ))}
           </ul>
 
-          {selectedStatuses.some(status => status === 'pending' || status === 'refuse') && (
+          {selectedStatuses.some(status => status === 'Pending' || status === 'Refused') && (
             <div className="p-3 border-t">
               <button 
                 onClick={handleSendOptinMessages}
