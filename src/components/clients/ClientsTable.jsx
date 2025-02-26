@@ -8,6 +8,8 @@ import { getClients, getCustomerCategories } from '../../services/clients'
 import { Navbar } from '../common/Navbar'
 import { FiFile } from 'react-icons/fi'
 import { addClient } from '../../services/clients'
+import { SettingsModal } from '../Settings/SettingsModal'
+import toast from 'react-hot-toast'
 
 export const ClientsTable = () => {
     const [phoneNumbers, setPhoneNumbers] = useState([''])
@@ -19,6 +21,7 @@ export const ClientsTable = () => {
     const [refetch, setRefetch] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 10
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
     useEffect(() => {
         dispatch(loadingOn());
@@ -161,58 +164,81 @@ export const ClientsTable = () => {
         pageNumbers.push(i)
     }
 
+    const handleSubmit = async (editedData) => {
+        dispatch(loadingOn())
+        try {
+            // Handle any settings updates here
+            setIsEditModalOpen(false)
+            setRefetch(!refetch)
+        } catch (error) {
+            toast.error(error.message || "Failed to update settings")
+        }
+        dispatch(loadingOff())
+    }
+
     return (
         <div>
             <Navbar />
 
             <div>
-                <div className='flex items-center gap-5 bg-white px-5 mb-[2px] py-1'>
-                    <Dropdown 
-                    onCategorySelect={(newSelectedCategories) => {
-                        setSelectedCategories(newSelectedCategories);
-                    }}
-                    />
-
-                    <div className='flex flex-col gap-2'>
-                        <div className='flex items-center gap-2'>
-                            <input 
-                                type='text'
-                                className='border border-gray-300 bg-gray-200 text-lg px-3 py-1 text-gray-500 rounded-sm w-96'
-                                placeholder='Phone Numbers (e.g. +1 098 765 4321)'
-                                value={phoneNumbers.join(',')}
-                                onChange={(e) => {
-                                    const numbers = e.target.value.split(',');
-                                    setPhoneNumbers(numbers);
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    <span className='text-gray-500 text-lg'>or</span>
-
-                    <div className="relative">
-                        <input 
-                            type="file" 
-                            id="phone-numbers-file"
-                            className="hidden"
-                            onChange={handleFileChange}
-                            accept=".csv,.xlsx,.xls, .txt"
+                <div className='flex items-center justify-between gap-5 bg-white px-5 mb-[2px] py-1'>
+                    <div className="flex items-center gap-5">
+                        <Dropdown 
+                            onCategorySelect={(newSelectedCategories) => {
+                                setSelectedCategories(newSelectedCategories);
+                            }}
                         />
-                        <label 
-                            htmlFor="phone-numbers-file" 
-                            className="flex items-center gap-2 cursor-pointer bg-gray-200 text-gray-500 py-1 px-3 rounded-sm"
+
+                        <div className='flex flex-col gap-2'>
+                            <div className='flex items-center gap-2'>
+                                <input 
+                                    type='text'
+                                    className='border border-gray-300 bg-gray-200 text-lg px-3 py-1 text-gray-500 rounded-sm w-96'
+                                    placeholder='Phone Numbers (e.g. +1 098 765 4321)'
+                                    value={phoneNumbers.join(',')}
+                                    onChange={(e) => {
+                                        const numbers = e.target.value.split(',');
+                                        setPhoneNumbers(numbers);
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        <span className='text-gray-500 text-lg'>or</span>
+
+                        <div className="relative">
+                            <input 
+                                type="file" 
+                                id="phone-numbers-file"
+                                className="hidden"
+                                onChange={handleFileChange}
+                                accept=".csv,.xlsx,.xls, .txt"
+                            />
+                            <label 
+                                htmlFor="phone-numbers-file" 
+                                className="flex items-center gap-2 cursor-pointer bg-gray-200 text-gray-500 py-1 px-3 rounded-sm"
+                            >
+                                <FiFile className="text-lg" />
+                                <span>{filePath ? filePath.name : 'Choose file'}</span>
+                            </label>
+                        </div>
+
+                        <button 
+                            className='bg-green-500 text-white px-5 py-1 rounded-sm text-lg font-semibold'
+                            onClick={handleAddClient}
                         >
-                            <FiFile className="text-lg" />
-                            <span>{filePath ? filePath.name : 'Choose file'}</span>
-                        </label>
+                            ADD
+                        </button>
                     </div>
 
-                    <button 
-                        className='bg-green-500 text-white px-5 py-1 rounded-sm text-lg font-semibold'
-                        onClick={handleAddClient}
-                    >
-                        ADD
-                    </button>
+                    <div className="flex-shrink-0">
+                        <button
+                            onClick={() => setIsEditModalOpen(true)}
+                            className="px-4 py-2 bg-red-700 text-white rounded hover:bg-red-800 transition-colors duration-200"
+                        >
+                            Settings
+                        </button>
+                    </div>
                 </div>
 
                 <table className="w-[100%]">
@@ -282,6 +308,15 @@ export const ClientsTable = () => {
             <div className="text-center mt-2 text-white">
                 Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, clients.length)} of {clients.length} entries
             </div>
+
+            {isEditModalOpen && (
+                <SettingsModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                    onSubmit={handleSubmit}
+                    showOptinEdit={false}
+                />
+            )}
         </div>
     )
 }

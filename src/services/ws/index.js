@@ -3,49 +3,22 @@ const API_PHONE = import.meta.env.VITE_WS_URL_PHONE
 
 
 
-export class WebSocketManager_Message {
-    socket;
-    fns;
+// export class WebSocketManager_Message {
+//     socket;
 
-    constructor() {
-        // console.log("API: ", API)
-        this.socket = new WebSocket(API_MESSAGE);
-        this.fns = {}
+//     constructor() {
+//         // console.log("API: ", API)
+//         this.socket = new WebSocket(API_MESSAGE);
+//     }
 
-        this.socket.addEventListener("message", event => {
-            const data = JSON.parse(event.data)
-            
-            console.log("Message from server: ", data)
-            if (this.fns[data.type]) {
-                this.fns[data.type].forEach((item) => {
-                    item.cb(data.data)
-                })
-            }
-        });
-    }
+//     getSocket() {
+//         return this.socket;
+//     }
 
-    addFns(key, cb, id) {
-        if (this.fns[key]) {
-            this.fns[key].push({ id, cb })
-        } else {
-            this.fns[key] = [{ id, cb }]
-        }
-    }
-
-    removeFns(key, id) {
-        if (this.fns[key]) {
-            this.fns[key] = this.fns[key].filter((fn) => fn.id !== id)
-        }
-    }
-
-    getSocket() {
-        return this.socket;
-    }
-
-    closeSocket() {
-        this.socket.close();
-    }
-}
+//     closeSocket() {
+//         this.socket.close();
+//     }
+// }
 
 
 export class WebSocketManager_Phone {

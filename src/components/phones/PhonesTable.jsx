@@ -8,7 +8,7 @@ import { getPhones } from '../../services/phone'
 import { setPhones } from '../../store/phoneSlice'
 import { Dropdown } from './DropDown'
 import { WebSocketManager_Phone } from '../../services/ws'
-import { SettingsModal } from './SettingsModal'
+import { SettingsModal } from '../Settings/SettingsModal'
 import { updateOptinMessage, getOptinMessage } from '../../services/phone'
 import toast from 'react-hot-toast'
 
@@ -101,17 +101,18 @@ export const PhonesTable = () => {
             <Navbar />
 
             <div>
-                <div id='message-form' className='flex items-center gap-5 bg-white px-5 mb-[2px] py-1'>
-                    <div id='message-form-content' className='flex flex-1 items-center gap-4'>
-                        <div className="flex-shrink-0">
-                            <Dropdown 
-                                selectedStatuses={selectedStatuses}
-                                onStatusSelect={setSelectedStatuses}
-                            />
-                        </div>
+                <div id='message-form' className='flex items-center justify-between gap-5 bg-white px-5 mb-[2px] py-1'>
+                    <div className="flex-shrink-0">
+                        <Dropdown 
+                            selectedStatuses={selectedStatuses}
+                            onStatusSelect={setSelectedStatuses}
+                        />
+                    </div>
+
+                    <div className="flex-shrink-0">
                         <button
                             onClick={() => setIsEditModalOpen(true)}
-                            className="px-4 py-2 bg-red-700 text-white rounded hover:bg-red-800"
+                            className="px-4 py-2 bg-red-700 text-white rounded hover:bg-red-800 transition-colors duration-200"
                         >
                             Settings
                         </button>
@@ -206,6 +207,7 @@ export const PhonesTable = () => {
                         onClose={() => setIsEditModalOpen(false)}
                         onSubmit={handleSubmit}
                         optinMessage={optinMessage}
+                        showOptinEdit={true}
                     />
                 )}
             </div>

@@ -17,8 +17,9 @@ import { MdOutlineEdit } from "react-icons/md";
 import toast from 'react-hot-toast'
 import { FaRegCalendarDays } from "react-icons/fa6";
 import { IoMdTime } from "react-icons/io";
-import { WebSocketManager_Message } from '../../services/ws'
+// import { WebSocketManager_Message } from '../../services/ws'
 import { EditMessageModal } from './EditMessageModal';
+import { SettingsModal } from '../Settings/SettingsModal'
 
 export const MessagesTable = () => {
     const dispatch = useDispatch()
@@ -40,13 +41,14 @@ export const MessagesTable = () => {
         time: false
     });
 
-    const ws_message = useRef(null);
-
+    const [ws_message, setWs_message] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingMessage, setEditingMessage] = useState(null);
 
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
     useEffect(() => {
         messageRef.current = messages;
@@ -59,23 +61,45 @@ export const MessagesTable = () => {
     }, [refetch])
 
     useEffect(() => {
-        const websocketManager = new WebSocketManager_Message();
-        const id = Date.now();
-        websocketManager.addFns("MESSAGE_UPDATE", (messageInfo) => {
-            if (!messageRef.current) return;
-    
-            const messageArr = messageRef.current.map((info) => {
-                const updatedItem = messageInfo.find((item) => item.id === info.id);
-                return updatedItem ? { ...info, num_sent: updatedItem.num_sent } : info;
-            });
-            ws_message.current = messageArr;
-            if (messageArr) dispatch(setMessages(messageArr));
-        }, id);
-    
-        ws_message.current = websocketManager;
+        let websocketManager = null;
+
+        const initializeWebSocket = () => {
+            const API_MESSAGE = import.meta.env.VITE_WS_URL_MESSAGE;
+            websocketManager = new WebSocket(API_MESSAGE);
+
+            websocketManager.onopen = (event) => {
+                websocketManager.send("Connect");
+            };
+
+            websocketManager.onmessage = (e) => {
+                const message = JSON.parse(e.data);
+                console.log("Message from server: ", message);
+
+                if(message.type === "MESSAGE_UPDATE") {
+                    const messageArr = messageRef.current.map((info) => {
+                        const updatedItem = message.data.find((item) => item.id === info.id);
+                        return updatedItem ? { ...info, num_sent: updatedItem.num_sent } : info;
+                    });
+
+                    if (messageArr) dispatch(setMessages(messageArr));
+                }
+            };
+
+            websocketManager.onerror = (error) => {
+                console.error("WebSocket error:", error);
+            };
+
+            setWs_message(websocketManager);
+        };
+
+        initializeWebSocket();
+
+        // Cleanup function
         return () => {
-            ws_message.current.removeFns("MESSAGE_UPDATE", id);
-            ws_message.current.closeSocket();
+            if (websocketManager && websocketManager.readyState === WebSocket.OPEN) {
+                console.log("Closing WebSocket connection...");
+                websocketManager.close();
+            }
         };
     }, []);
     
@@ -194,6 +218,11 @@ export const MessagesTable = () => {
         setEditingMessage(message);
         setIsEditModalOpen(true);
     };
+
+    const handleSubmit = (message) =>
+    {
+
+    }
 
     const handleEditSubmit = async (editedData) => {
         dispatch(loadingOn());
@@ -349,7 +378,7 @@ export const MessagesTable = () => {
                         </div>
                     </div>
 
-                    <div id='message-form-submit' className='flex-shrink-0'>
+                    <div id='message-form-actions' className='flex-shrink-0 flex items-center gap-2'>
                         <button 
                             onClick={handleMessageSubmit}
                             className='bg-[#0088cc] hover:bg-[#006699] text-white px-6 py-2 rounded-lg text-lg font-medium transition-colors duration-200 flex items-center gap-2'
@@ -359,6 +388,13 @@ export const MessagesTable = () => {
                                 <path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
+                        </button>
+
+                        <button
+                            onClick={() => setIsSettingsModalOpen(true)}
+                            className="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg text-lg font-medium transition-colors duration-200"
+                        >
+                            Settings
                         </button>
                     </div>
                 </div>
@@ -488,6 +524,13 @@ export const MessagesTable = () => {
                 onSubmit={handleEditSubmit}
                 message={editingMessage}
                 categories={categories}
+            />
+
+            <SettingsModal
+                isOpen={isSettingsModalOpen}
+                onClose={() => setIsSettingsModalOpen(false)}
+                onSubmit={handleSubmit}
+                showOptinEdit={false}
             />
         </div>
     )
