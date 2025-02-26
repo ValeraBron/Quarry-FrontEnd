@@ -8,7 +8,7 @@ import { getPhones } from '../../services/phone'
 import { setPhones } from '../../store/phoneSlice'
 import { Dropdown } from './DropDown'
 import { WebSocketManager_Phone } from '../../services/ws'
-import { EditOptinMessage } from './EditOptinMessage'
+import { SettingsModal } from './SettingsModal'
 import { updateOptinMessage, getOptinMessage } from '../../services/phone'
 import toast from 'react-hot-toast'
 
@@ -113,7 +113,7 @@ export const PhonesTable = () => {
                             onClick={() => setIsEditModalOpen(true)}
                             className="px-4 py-2 bg-red-700 text-white rounded hover:bg-red-800"
                         >
-                            Edit Message
+                            Settings
                         </button>
                     </div>
                 </div>    
@@ -201,7 +201,7 @@ export const PhonesTable = () => {
                 </div>
 
                 {isEditModalOpen && (
-                    <EditOptinMessage
+                    <SettingsModal
                         isOpen={isEditModalOpen}
                         onClose={() => setIsEditModalOpen(false)}
                         onSubmit={handleSubmit}

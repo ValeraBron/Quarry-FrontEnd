@@ -68,3 +68,23 @@ export const confirmEmail = async ({email}) => {
         console.log(error)
     }
 }
+
+export const getUser = async () => {
+    try {
+        const token = localStorage.getItem('access_token');
+
+        const res = await fetch(API + 'current-user', {
+            method: 'GET',
+            headers: {
+                authorization: `Bearer ${token}`,
+            }
+        });
+        const json = await res.json();
+        if (json.detail === "Could not validate credentials") {
+            localStorage.removeItem('access_token')
+        }
+        return json;
+    } catch (error) {
+        console.log(error)
+    }
+}

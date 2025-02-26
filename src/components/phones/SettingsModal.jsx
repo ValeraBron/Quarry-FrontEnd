@@ -1,19 +1,31 @@
 import React, { useState, useEffect } from 'react';
+import { checkout} from '../../services/stripe';
+import { getUser } from '../../services/auth';
 
-export const EditOptinMessage = ({
+export const SettingsModal = ({
     isOpen,
     onClose,
     onSubmit,
-    optinMessage
+    optinMessage,
+    onSubscribe
 }) => {
     const [editMessage, setEditMessage] = useState('');
     const [error, setError] = useState(false);
+    const [userType, setUserType] = useState(0);
 
     useEffect(() => {
         if (optinMessage) {
             setEditMessage(optinMessage);
         }
     }, [optinMessage]);
+
+    useEffect(() => {
+        const fetchUserType = async () => {
+            const user = await getUser();
+            setUserType(user.user_type);
+        };
+        fetchUserType();
+    }, []);
 
     const handleSubmit = () => {
         if (!editMessage.trim()) {
@@ -26,15 +38,45 @@ export const EditOptinMessage = ({
         });
     };
 
+    const handleSubscription = async () => {
+
+        const user = await getUser();
+        // console.log("user: ", user)
+        const data = {
+            email: user.username,
+            plan_id: 'price_1Q2EPWAZfjTlvHBok0I7tr1x'
+        }
+        try {
+            const checkout_session_url = await checkout(data);
+            
+            if(checkout_session_url)
+            {
+                window.location.href = checkout_session_url;
+            }
+
+            else{
+                console.error("No Url found in the response");
+            }
+
+        } catch (error) {
+            console.error("Error during checkout:", error);
+            throw error;
+        }
+
+    };
+
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-[80%] max-w-4xl">
-                <h2 className="text-2xl font-bold mb-4">Edit Opt-in Message</h2>
+                <h2 className="text-2xl font-bold mb-4">Settings</h2>
                 
                 <div className="flex flex-col gap-4">
                     <div id='message-container' className='w-full'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Opt-in Message
+                        </label>
                         <div className="relative w-full">
                             <input
                                 type="text"
@@ -52,6 +94,20 @@ export const EditOptinMessage = ({
                             </span>
                         </div>
                         {error && <p className="text-red-500 text-sm mt-1">Please enter a message</p>}
+                    </div>
+
+                    <div className="flex justify-center my-4">
+                        <button
+                            onClick={handleSubscription}
+                            disabled={userType === 1}
+                            className={`px-6 py-2 ${
+                                userType === 1 
+                                ? 'bg-gray-400' 
+                                : 'bg-green-600 hover:bg-green-700'
+                            } text-white rounded-lg transition-colors`}
+                        >
+                            {userType === 1 ? 'Subscribed' : 'Subscribe for 500+ messages'}
+                        </button>
                     </div>
 
                     <div className="flex justify-end gap-3 mt-4">

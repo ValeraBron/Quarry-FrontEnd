@@ -17,6 +17,8 @@ export const ClientsTable = () => {
     const clients = useSelector(state => state.client.data)
     const categories = useSelector(state => state.category.categories)
     const [refetch, setRefetch] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
 
     useEffect(() => {
         dispatch(loadingOn());
@@ -149,6 +151,16 @@ export const ClientsTable = () => {
         // You can perform any additional actions here when categories change
     }
 
+    const indexOfLastItem = currentPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    const currentItems = clients.slice(indexOfFirstItem, indexOfLastItem)
+    const totalPages = Math.ceil(clients.length / itemsPerPage)
+
+    const pageNumbers = []
+    for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i)
+    }
+
     return (
         <div>
             <Navbar />
@@ -214,9 +226,9 @@ export const ClientsTable = () => {
                     </thead>
 
                     <tbody className="table-body-transparent">
-                        {clients.map((item, index) => (
+                        {currentItems.map((item, index) => (
                             <tr key={index} className="bg-red-700 border-t-2 border-t-white">
-                                <td className="text-center p-2 text-white">{index + 1}</td>
+                                <td className="text-center p-2 text-white">{indexOfFirstItem + index + 1}</td>
                                 <td className="text-center p-2 text-white">
                                     {item.phone_numbers[0]}
                                     {item.phone_numbers.length > 1 && (
@@ -233,6 +245,42 @@ export const ClientsTable = () => {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            <div className="flex justify-center items-center mt-4 gap-2">
+                <button 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 bg-red-700 text-white rounded disabled:opacity-50"
+                >
+                    Previous
+                </button>
+                
+                {pageNumbers.map(number => (
+                    <button
+                        key={number}
+                        onClick={() => setCurrentPage(number)}
+                        className={`px-4 py-2 rounded ${
+                            currentPage === number 
+                                ? 'bg-white text-red-700' 
+                                : 'bg-red-700 text-white'
+                        }`}
+                    >
+                        {number}
+                    </button>
+                ))}
+                
+                <button 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 bg-red-700 text-white rounded disabled:opacity-50"
+                >
+                    Next
+                </button>
+            </div>
+
+            <div className="text-center mt-2 text-white">
+                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, clients.length)} of {clients.length} entries
             </div>
         </div>
     )

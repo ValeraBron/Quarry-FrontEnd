@@ -45,6 +45,9 @@ export const MessagesTable = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingMessage, setEditingMessage] = useState(null);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
     useEffect(() => {
         messageRef.current = messages;
     }, [messages])
@@ -231,6 +234,16 @@ export const MessagesTable = () => {
         dispatch(loadingOff());
     };
 
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = messages?.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil((messages?.length || 0) / itemsPerPage);
+
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+    }
+
     return (
         <div>
             <Navbar />
@@ -364,8 +377,7 @@ export const MessagesTable = () => {
                     </thead>
 
                     <tbody className="bg-white">
-
-                        {messages?.map((item, messageIndex) => {
+                        {currentItems?.map((item, messageIndex) => {
                             let status = 'REVIEW';
                             //if (item.sent_timestamp) console.log("time:", item.sent_timestamp);
                             if (item.message_status === 1) {
@@ -430,6 +442,43 @@ export const MessagesTable = () => {
                     </tbody>
                 </table>
             </div>
+
+            <div className="flex justify-center items-center mt-4 gap-2">
+                <button 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 bg-red-700 text-white rounded disabled:opacity-50"
+                >
+                    Previous
+                </button>
+                
+                {pageNumbers.map(number => (
+                    <button
+                        key={number}
+                        onClick={() => setCurrentPage(number)}
+                        className={`px-4 py-2 rounded ${
+                            currentPage === number 
+                                ? 'bg-white text-red-700' 
+                                : 'bg-red-700 text-white'
+                        }`}
+                    >
+                        {number}
+                    </button>
+                ))}
+                
+                <button 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 bg-red-700 text-white rounded disabled:opacity-50"
+                >
+                    Next
+                </button>
+            </div>
+
+            <div className="text-center mt-2 text-white">
+                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, messages?.length || 0)} of {messages?.length || 0} entries
+            </div>
+
             <EditMessageModal 
                 isOpen={isEditModalOpen}
                 onClose={() => {
