@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_URL
+const API = import.meta.env.VITE_STRIPE_URL
 
 
 export const checkout =  async (data) => {
