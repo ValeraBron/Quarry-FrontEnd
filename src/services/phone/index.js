@@ -10,7 +10,7 @@ export const getPhones = async () => {
         });
         
         const json = await res.json();
-        if (json.detail === "Could not validate credentials") {
+        if (json && json.detail === "Could not validate credentials") {
             localStorage.removeItem('access_token');
         }
         return json;

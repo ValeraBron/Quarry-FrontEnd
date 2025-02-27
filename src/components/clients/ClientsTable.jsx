@@ -34,9 +34,9 @@ export const ClientsTable = () => {
         let clients = await getClients();
         let categories = await getCustomerCategories();
         
-        if (clients.detail === "Could not validate credentials") {
+        if (clients && clients.detail === "Could not validate credentials") {
             alert('Unauthorized user!');
-            navigate('/signup')
+            navigate('/signin')
         }
 
         if (clients) {

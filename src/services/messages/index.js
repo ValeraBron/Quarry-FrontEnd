@@ -11,7 +11,7 @@ export const sendSms = async (message_id) => {
 
         const json = await res.json();
         // console.log({json})
-        if (json.detail === "Could not validate credentials") {
+        if (json && json.detail === "Could not validate credentials") {
             localStorage.removeItem('access_token');
         }
         return json;
