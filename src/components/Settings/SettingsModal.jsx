@@ -45,7 +45,7 @@ export const SettingsModal = ({
         // console.log("user: ", user)
         const data = {
             email: user.username,
-            plan_id: 'price_1Q2EPWAZfjTlvHBok0I7tr1x'
+            plan_id: "price_1Qx8rNAZfjTlvHBoUsFN18kl"
         }
         try {
             const checkout_session_url = await checkout(data);
