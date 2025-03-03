@@ -8,8 +8,10 @@ export const Dropdown = ({ onStatusSelect, selectedStatuses }) => {
   const phones = useSelector(state => state.phone.data)
   const optinStatuses = [
     { id: 'Pending', name: 'Pending' },
+    { id: 'Sent', name: 'Sent' },
     { id: 'Success', name: 'Success' },
     { id: 'Refused', name: 'Refused' },
+    
   ];
 
   const toggleDropdown = () => {

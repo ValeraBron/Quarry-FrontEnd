@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useDispatch } from "react-redux"
 import {loadingOff, loadingOn} from '../store/authSlice'
 import { signupUser } from "../services/auth"
-import logo from "../assets/Logo.svg"
+import logo from "../assets/logo.svg"
 import mailPNG from "../assets/email.svg"
 import eyePNG from "../assets/eye.svg"
 import showPNG from "../assets/show.svg"
