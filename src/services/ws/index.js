@@ -1,26 +1,6 @@
 const API_MESSAGE = import.meta.env.VITE_WS_URL_MESSAGE
 const API_PHONE = import.meta.env.VITE_WS_URL_PHONE
 
-
-
-// export class WebSocketManager_Message {
-//     socket;
-
-//     constructor() {
-//         // console.log("API: ", API)
-//         this.socket = new WebSocket(API_MESSAGE);
-//     }
-
-//     getSocket() {
-//         return this.socket;
-//     }
-
-//     closeSocket() {
-//         this.socket.close();
-//     }
-// }
-
-
 export class WebSocketManager_Phone {
     socket;
     fns;

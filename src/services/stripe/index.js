@@ -25,3 +25,13 @@ export const checkout =  async (data) => {
 }
 
 
+export const getBalance = async () => {
+    const token = localStorage.getItem('access_token') || '';
+    const res = await fetch(API+`balance`, {
+        headers: {
+            authorization: `Bearer ${token}`
+        }
+    })
+    const json = await res.json();
+    return json;
+}

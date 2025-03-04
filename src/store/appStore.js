@@ -5,6 +5,7 @@ import clientReducer from './clientSlice'
 import messageReducer from './messageSlice'
 import categoryReducer from './categorySlice'
 import phoneReducer from './phoneSlice'
+import balanceReducer from './balanceSlice'
 const appStore = configureStore({
     reducer: {
         auth: authReducer,
@@ -12,7 +13,8 @@ const appStore = configureStore({
         message: messageReducer,
         notification: notificationReducer,
         category: categoryReducer,
-        phone: phoneReducer
+        phone: phoneReducer,
+        balance: balanceReducer
     }
 })
 

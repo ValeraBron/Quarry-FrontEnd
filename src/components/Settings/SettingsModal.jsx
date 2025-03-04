@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { checkout} from '../../services/stripe';
 import { getUser } from '../../services/auth';
+import { useSelector } from 'react-redux';
+import { setBalance } from '../../store/balanceSlice';
+import { useDispatch } from 'react-redux';
 
 export const SettingsModal = ({
     isOpen,
@@ -12,7 +15,8 @@ export const SettingsModal = ({
 }) => {
     const [editMessage, setEditMessage] = useState('');
     const [error, setError] = useState(false);
-    const [userType, setUserType] = useState(0);
+    const smsBalance = useSelector(state => state.balance.data);
+    const dispatch = useDispatch()
 
     useEffect(() => {
         if (optinMessage) {
@@ -21,11 +25,12 @@ export const SettingsModal = ({
     }, [optinMessage]);
 
     useEffect(() => {
-        const fetchUserType = async () => {
+        const fetchBalance = async () => {
             const user = await getUser();
-            setUserType(user.user_type);
+            // console.log("user: ", user)
+            dispatch(setBalance(user.sms_balance));
         };
-        fetchUserType();
+        fetchBalance();
     }, []);
 
     const handleSubmit = () => {
@@ -45,7 +50,7 @@ export const SettingsModal = ({
         // console.log("user: ", user)
         const data = {
             email: user.username,
-            plan_id: "price_1Qx8rNAZfjTlvHBoUsFN18kl"
+            plan_id: "price_1QyZ7MAZfjTlvHBoDu7f7W8X"
         }
         try {
             const checkout_session_url = await checkout(data);
@@ -128,17 +133,13 @@ export const SettingsModal = ({
                     {/* Subscription Section */}
                     <div>
                         <h3 className="text-xl font-semibold mb-4">Subscription</h3>
-                        <div className="flex justify-center">
+                        <div className="flex flex-col items-center gap-3">
+                            <p className="text-lg">Current SMS Balance: {smsBalance}</p>
                             <button
                                 onClick={handleSubscription}
-                                disabled={userType === 1}
-                                className={`px-6 py-2 ${
-                                    userType === 1 
-                                    ? 'bg-gray-400' 
-                                    : 'bg-green-600 hover:bg-green-700'
-                                } text-white rounded-lg transition-colors`}
+                                className={`px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors`}
                             >
-                                {userType === 1 ? 'Subscribed' : 'Subscribe for 500+ messages'}
+                                Add 500+ Balance
                             </button>
                         </div>
                     </div>
